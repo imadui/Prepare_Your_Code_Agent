@@ -11,7 +11,7 @@ To scale cleanly, separate capabilities into distinct architectural layers: **pe
 ```mermaid
 graph TD
     subgraph Instructions [Instruction Layer]
-        PI[Permanent Instructions: AGENTS.md\nLoaded on EVERY turn; keep < 150 lines]
+        PI[Permanent Instructions: AGENTS.md\nBaseline project guidance]
         SK[Skills: SKILL.md\nLoaded ON DEMAND; progressive disclosure]
     end
 
@@ -41,7 +41,7 @@ graph TD
 1. **Permanent Instructions (`AGENTS.md`):**
    - **Scope:** Loaded into every turn of the session.
    - **Purpose:** Non-negotiable repository invariants (e.g., "All tests must pass before committing", "Bind local dev servers to `127.0.0.1`", "Never hard-code secrets").
-   - **Guideline:** Strictly limit to 50–150 lines. Every line costs tokens on every single turn.
+   - **Guideline:** Keep it intentionally concise. Treat any line-count target as a team heuristic rather than a product limit; move specialized procedures into skills or task-specific documentation.
 
 2. **Skills (On-Demand Workflows):**
    - **Scope:** Discovered via metadata; body loaded **only when the task matches the skill's triggers**.
@@ -68,12 +68,12 @@ graph TD
 
 ## Subagent Blueprints
 
-Subagents should be specialized by role rather than generic clones of the primary agent. Here are the four standard production subagent definitions:
+Subagents should be specialized by role rather than generic clones of the primary agent. Here are four practical subagent blueprints:
 
 ### 1. Explorer Subagent
 - **Objective:** Map unknown codebases, discover file dependencies, and collect citations.
 - **Model Profile:** Fast model (`gpt-6-luna` or `claude-3-5-haiku`), low reasoning effort.
-- **Permissions:** Read-only (`edit: deny`, `bash: read-only`).
+- **Permissions:** Read-only in the runtime's permission model; allow only the minimum inspection commands needed.
 - **When to use:** Starting work in a large unfamiliar repository or locating all downstream callers before refactoring an interface.
 
 ### 2. Reviewer Subagent
@@ -85,13 +85,13 @@ Subagents should be specialized by role rather than generic clones of the primar
 ### 3. Tester Subagent
 - **Objective:** Run test suites, reproduce bug reports with minimal failing cases, and verify fixes.
 - **Model Profile:** Balanced model (`gpt-6-sol`), medium reasoning effort.
-- **Permissions:** Test execution (`edit: allow` inside `tests/` only, `bash: allow`).
+- **Permissions:** Allow test execution and only the file edits genuinely needed for test fixtures or reproductions.
 - **When to use:** Verifying that a bug is genuinely reproducible before editing implementation code.
 
 ### 4. Security Subagent
 - **Objective:** Scan the repository and recent diffs for secrets, injection vectors, unsafe deserialization, and privilege escalation.
 - **Model Profile:** High-intelligence model, high reasoning effort.
-- **Permissions:** Read-only (`edit: deny`, `bash: read-only`).
+- **Permissions:** Read-only in the runtime's permission model; allow only the inspection commands needed for the audit.
 - **When to use:** Pre-commit audit before opening pull requests or pushing public repositories.
 
 ---
