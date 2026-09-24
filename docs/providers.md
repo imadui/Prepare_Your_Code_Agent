@@ -13,7 +13,7 @@ Coding agents interact with language models through four primary integration pat
 1. **Direct SaaS API (OpenAI, Anthropic, Google AI Studio):**
    Direct HTTP requests to the vendor's API gateway authenticated via an API key in a request header (`Authorization: Bearer <key>` or `x-api-key`). Best for developer experimentation and standard projects.
 2. **Cloud-Hosted Enterprise Endpoints (Google Cloud Vertex AI, Azure OpenAI, Amazon Bedrock):**
-   Models deployed inside an enterprise cloud tenant. Authentication relies on IAM tokens, managed identities, or OAuth2 service credentials (e.g., Google Application Default Credentials or Azure AD). Required when strict data sovereignty, VPC peering, and enterprise compliance agreements are mandated.
+   Models deployed inside an enterprise cloud tenant. Authentication relies on IAM tokens, managed identities, or OAuth2 service credentials (e.g., Google Application Default Credentials or Azure AD). Common when cloud IAM, regional controls, private networking, or enterprise compliance requirements matter.
 3. **OpenAI-Compatible Gateways (LiteLLM, vLLM, Ollama, Groq, OpenRouter):**
    Intermediary proxies or self-hosted runtimes exposing an OpenAI-compatible API such as `/v1/chat/completions` and, where implemented, `/v1/responses`. Useful for routing, load balancing, fallback logic, or hosting open-weight models locally.
 4. **Product-Native Subscription Authentication:**
@@ -187,7 +187,7 @@ Azure-hosted OpenAI instances. In Azure, calls route to a deployment name rather
 export AZURE_OPENAI_API_KEY="your-azure-api-key-here"
 export AZURE_OPENAI_ENDPOINT="https://your-resource-name.openai.azure.com"
 export AZURE_OPENAI_DEPLOYMENT="your-deployment-name"
-export AZURE_OPENAI_API_VERSION="2024-08-01-preview"
+export AZURE_OPENAI_API_VERSION="your-api-version"
 ```
 
 ### Raw Verification (curl)
