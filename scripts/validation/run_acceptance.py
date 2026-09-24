@@ -18,6 +18,27 @@ sys.path.insert(0, REPO_ROOT)
 from scripts.validation.safety_check import scan_repository
 
 
+def detect_test_command(workspace_dir, test_command=None):
+    """Return a supported test command without executing it."""
+    if test_command:
+        return shlex.split(test_command, posix=os.name != "nt")
+
+    package_json = os.path.join(workspace_dir, "package.json")
+    if os.path.isfile(package_json):
+        try:
+            with open(package_json, "r", encoding="utf-8") as f:
+                package = json.load(f)
+            if package.get("scripts", {}).get("test"):
+                return ["npm", "test"]
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    if os.path.isdir(os.path.join(workspace_dir, "tests")):
+        return [sys.executable, "-m", "unittest", "discover", "tests"]
+
+    return None
+
+
 def evaluate_workspace(workspace_dir, test_command=None):
     checks = []
 
@@ -54,22 +75,7 @@ def evaluate_workspace(workspace_dir, test_command=None):
         checks.append({"name": "Git Status", "passed": False, "detail": str(e)})
 
     # 2. Check for Automated Tests and Execution
-    test_dir = os.path.join(workspace_dir, "tests")
-    package_json = os.path.join(workspace_dir, "package.json")
-    command = None
-
-    if test_command:
-        command = shlex.split(test_command, posix=os.name != "nt")
-    elif os.path.isfile(package_json):
-        try:
-            with open(package_json, "r", encoding="utf-8") as f:
-                package = json.load(f)
-            if package.get("scripts", {}).get("test"):
-                command = ["npm", "test"]
-        except (OSError, json.JSONDecodeError):
-            pass
-    if command is None and os.path.isdir(test_dir):
-        command = [sys.executable, "-m", "unittest", "discover", "tests"]
+    command = detect_test_command(workspace_dir, test_command=test_command)
 
     if command:
         try:
