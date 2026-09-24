@@ -21,6 +21,7 @@ class TestDoctor(unittest.TestCase):
         tools = check_tools()
         self.assertIsInstance(tools, dict)
         self.assertIn("python", tools)
+        self.assertIn("claude", tools)
         self.assertTrue(tools["python"]["available"])
 
     def test_provider_env_vars_redaction(self):
