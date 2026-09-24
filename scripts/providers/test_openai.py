@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smoke test for OpenAI API connectivity.
+Smoke test for OpenAI Responses API connectivity.
 Reads OPENAI_API_KEY and sends a minimal request to verify endpoint reachability.
 """
 
@@ -23,15 +23,15 @@ def test_openai(dry_run=False):
 
     payload = {
         "model": model,
-        "messages": [{"role": "user", "content": "ping"}],
-        "max_tokens": 5
+        "input": "ping",
+        "max_output_tokens": 5
     }
 
     if dry_run:
         print(f"[DRY-RUN PASS] OpenAI payload formed for model '{model}' at '{base_url}'.")
         return True
 
-    endpoint = f"{base_url}/chat/completions"
+    endpoint = f"{base_url}/responses"
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         endpoint,
