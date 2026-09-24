@@ -1,0 +1,43 @@
+# Browser Codex Profile: Engineering + Playwright MCP for UI Verification
+model = "gpt-6-sol"
+model_reasoning_effort = "medium"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+allow_login_shell = false
+
+[features]
+multi_agent = true
+hooks = true
+
+[sandbox_workspace_write]
+network_access = true  # Required for browser network loopback requests
+
+[shell_environment_policy]
+inherit = "core"
+ignore_default_excludes = false
+
+[shell_environment_policy.filters]
+"AWS_*" = "exclude"
+"AZURE_*" = "exclude"
+"GITHUB_TOKEN" = "exclude"
+
+[agents]
+enabled = true
+default_subagent_model = "gpt-6-luna"
+max_concurrent_threads_per_session = 3
+
+[agents.reviewer]
+description = "Independent senior code review for correctness, security, edge cases, and maintainability."
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+enabled = true
+default_tools_approval_mode = "auto"
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-playwright"]
+enabled = true
+default_tools_approval_mode = "auto"
+

@@ -1,0 +1,20 @@
+# Minimal Codex Profile: Shell + Git only
+# Low token overhead, fast response time
+model = "gpt-6-luna"
+model_reasoning_effort = "low"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+allow_login_shell = false
+
+[sandbox_workspace_write]
+network_access = false
+
+[shell_environment_policy]
+inherit = "core"
+ignore_default_excludes = false
+
+[shell_environment_policy.filters]
+"AWS_*" = "exclude"
+"AZURE_*" = "exclude"
+"GITHUB_TOKEN" = "exclude"
+

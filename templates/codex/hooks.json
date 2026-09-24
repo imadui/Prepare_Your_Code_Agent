@@ -1,0 +1,18 @@
+{
+  "description": "Example Codex lifecycle hooks for workspace safety and validation",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/validation/safety_check.py --quick",
+            "timeout": 10,
+            "statusMessage": "Verifying repository safety before command execution"
+          }
+        ]
+      }
+    ]
+  }
+}
