@@ -11,7 +11,7 @@ To scale cleanly, separate capabilities into distinct architectural layers: **pe
 ```mermaid
 graph TD
     subgraph Instructions [Instruction Layer]
-        PI[Permanent Instructions: AGENTS.md\nBaseline project guidance]
+        PI[Permanent Instructions\nAGENTS.md / CLAUDE.md]
         SK[Skills: SKILL.md\nLoaded ON DEMAND; progressive disclosure]
     end
 
@@ -38,9 +38,10 @@ graph TD
 
 ### Layer Definitions
 
-1. **Permanent Instructions (`AGENTS.md`):**
-   - **Scope:** Loaded into every turn of the session.
+1. **Permanent Instructions (`AGENTS.md` / `CLAUDE.md`):**
+   - **Scope:** Baseline repository guidance loaded by the selected runtime.
    - **Purpose:** Non-negotiable repository invariants (e.g., "All tests must pass before committing", "Bind local dev servers to `127.0.0.1`", "Never hard-code secrets").
+   - **Runtime mapping:** Codex and OpenCode commonly use `AGENTS.md`; Claude Code uses `CLAUDE.md` and can also read `AGENTS.md` on current versions.
    - **Guideline:** Keep it intentionally concise. Treat any line-count target as a team heuristic rather than a product limit; move specialized procedures into skills or task-specific documentation.
 
 2. **Skills (On-Demand Workflows):**
@@ -66,19 +67,35 @@ graph TD
 
 ---
 
+## Runtime mapping
+
+The same architecture appears under different file names:
+
+| Capability | Codex | Claude Code | OpenCode |
+|---|---|---|---|
+| Permanent project instructions | `AGENTS.md` | `CLAUDE.md` and/or `AGENTS.md` | `AGENTS.md` |
+| Project skills | Skills | `.claude/skills/<name>/SKILL.md` | Runtime skills/tooling |
+| Project subagents | `[agents]` configuration | `.claude/agents/*.md` | `agents` configuration |
+| External tools | MCP servers | MCP servers / `.mcp.json` | `mcp.servers` |
+| Deterministic lifecycle automation | Hooks | Hooks in settings / skills / agents | Runtime/plugin dependent |
+
+Do not force one runtime's syntax onto another. Share the engineering principles, then use each product's native configuration model.
+
+---
+
 ## Subagent Blueprints
 
 Subagents should be specialized by role rather than generic clones of the primary agent. Here are four practical subagent blueprints:
 
 ### 1. Explorer Subagent
 - **Objective:** Map unknown codebases, discover file dependencies, and collect citations.
-- **Model Profile:** Fast model (`gpt-6-luna` or `claude-3-5-haiku`), low reasoning effort.
+- **Model Profile:** Fast model (a fast model or the runtime's lightweight model tier), low reasoning effort.
 - **Permissions:** Read-only in the runtime's permission model; allow only the minimum inspection commands needed.
 - **When to use:** Starting work in a large unfamiliar repository or locating all downstream callers before refactoring an interface.
 
 ### 2. Reviewer Subagent
 - **Objective:** Inspect completed diffs for correctness, regressions, edge cases, and code style.
-- **Model Profile:** High-intelligence model (`gpt-6-sol` or `claude-3-7-sonnet`), high reasoning effort.
+- **Model Profile:** High-intelligence model (a high-capability model appropriate for review), high reasoning effort.
 - **Permissions:** Read-only (`edit: deny`, `bash: deny`).
 - **Prompt Invariant:** *"You are an independent senior code reviewer. Your role is adversarial: find subtle bugs, missing error handling, and unverified assumptions. Do not approve work without inspecting the actual git diff."*
 
@@ -119,7 +136,7 @@ Delegating to subagents introduces coordination latency. Avoid these four common
 
 | Question | Destination |
 |---|---|
-| Does this rule apply to every single task in the repository? | `AGENTS.md` |
+| Does this rule apply to every single task in the repository? | `AGENTS.md` or `CLAUDE.md`, depending on runtime |
 | Is this a specialized procedure only needed for specific tasks (e.g., deploying, creating a migration)? | Skill (`SKILL.md`) |
 | Does this require querying a live external service or database? | MCP Server |
 | Does this require an adversarial, fresh perspective without conversation bias? | Reviewer Subagent |
