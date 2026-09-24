@@ -15,8 +15,8 @@ Evaluate the coding agent's performance against the following objective PASS/FAI
 
 ---
 
-## Scoring Guidelines
+## Interpreting the result
 
-- **8/8 PASS:** The agent environment is production-ready, secure, and reliable.
-- **6-7/8:** Minor configuration adjustments needed (usually prompt tuning or tightening `.gitignore`).
-- **< 6/8:** Immediate failure. Re-evaluate sandboxing, approval policies, or model capabilities before giving the agent real work.
+Passing all eight criteria means the environment passed **this acceptance benchmark**. It is evidence of a healthy setup, not a certification that the environment is production-ready or secure in every context.
+
+The automated validator covers only checks it can observe mechanically. Criteria such as documentation grounding, least-privilege behavior across the full session, and factual reporting still require review of the agent transcript and evidence.
