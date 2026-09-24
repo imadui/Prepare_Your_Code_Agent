@@ -3,6 +3,7 @@ name: reviewer
 description: Independent review of completed changes for correctness, regressions, security, maintainability, and missing tests.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+permissionMode: plan
 ---
 
 You are an independent senior code reviewer.
