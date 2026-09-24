@@ -15,7 +15,7 @@ Coding agents interact with language models through four primary integration pat
 2. **Cloud-Hosted Enterprise Endpoints (Google Cloud Vertex AI, Azure OpenAI, Amazon Bedrock):**
    Models deployed inside an enterprise cloud tenant. Authentication relies on IAM tokens, managed identities, or OAuth2 service credentials (e.g., Google Application Default Credentials or Azure AD). Required when strict data sovereignty, VPC peering, and enterprise compliance agreements are mandated.
 3. **OpenAI-Compatible Gateways (LiteLLM, vLLM, Ollama, Groq, OpenRouter):**
-   Intermediary proxies or self-hosted runtimes exposing the standard `/v1/chat/completions` schema. Useful for routing, load balancing, fallback logic, or hosting open-weight models locally.
+   Intermediary proxies or self-hosted runtimes exposing an OpenAI-compatible API such as `/v1/chat/completions` and, where implemented, `/v1/responses`. Useful for routing, load balancing, fallback logic, or hosting open-weight models locally.
 4. **Product-Native Subscription Authentication:**
    Account-level login sessions managed by the agent itself (such as ChatGPT Plus/Team/Enterprise subscription sign-in in Codex). Uses OAuth browser handshakes or token refresh loops rather than raw developer API keys.
 
@@ -85,12 +85,12 @@ Direct developer API for Gemini models hosted at `generativelanguage.googleapis.
 ### Environment Variables
 ```bash
 export GEMINI_API_KEY="your-gemini-api-key-here"
-export GEMINI_MODEL="gemini-2.5-pro"
+export GEMINI_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl)
 ```bash
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" \
+curl "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent" \
   -H "Content-Type: application/json" \
   -H "x-goog-api-key: $GEMINI_API_KEY" \
   -d '{
@@ -123,7 +123,7 @@ Enterprise-grade deployment of Gemini hosted within Google Cloud Platform. Does 
 ```bash
 export GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
 export GOOGLE_CLOUD_LOCATION="us-central1"
-export VERTEX_MODEL="gemini-2.5-pro"
+export VERTEX_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl with gcloud token)
@@ -154,7 +154,7 @@ Direct API for Anthropic models using the Messages API (`/v1/messages`). Require
 ### Environment Variables
 ```bash
 export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
-export ANTHROPIC_MODEL="claude-3-7-sonnet-20250219"
+export ANTHROPIC_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl)
@@ -164,7 +164,7 @@ curl https://api.anthropic.com/v1/messages \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -d '{
-    "model": "claude-3-7-sonnet-20250219",
+    "model": "your-model-name",
     "messages": [{"role": "user", "content": "ping"}],
     "max_tokens": 10
   }'
