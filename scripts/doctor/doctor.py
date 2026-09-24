@@ -40,6 +40,7 @@ def check_tools():
         "gh": ["gh", "--version"],
         "node": ["node", "--version"],
         "codex": ["codex", "--version"],
+        "claude": ["claude", "--version"],
         "opencode": ["opencode", "--version"],
     }
     results = {}

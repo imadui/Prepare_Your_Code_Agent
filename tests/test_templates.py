@@ -30,6 +30,22 @@ class TestTemplates(unittest.TestCase):
         self.assertIn("mcp", data)
         self.assertIn("servers", data["mcp"])
 
+    def test_claude_code_settings_json_valid(self):
+        path = os.path.join(self.root, "templates", "claude-code", "settings.json")
+        self.assertTrue(os.path.exists(path), f"Missing {path}")
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("permissions", data)
+        self.assertIn("allow", data["permissions"])
+        self.assertIn("ask", data["permissions"])
+        self.assertIn("deny", data["permissions"])
+
+    def test_claude_code_instruction_and_extensions_exist(self):
+        base = os.path.join(self.root, "templates", "claude-code")
+        self.assertTrue(os.path.exists(os.path.join(base, "CLAUDE.md")))
+        self.assertTrue(os.path.exists(os.path.join(base, "agents", "reviewer.md")))
+        self.assertTrue(os.path.exists(os.path.join(base, "skills", "validate", "SKILL.md")))
+
     def test_codex_hooks_json_valid(self):
         path = os.path.join(self.root, "templates", "codex", "hooks.json")
         self.assertTrue(os.path.exists(path), f"Missing {path}")

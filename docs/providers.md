@@ -21,7 +21,7 @@ Coding agents interact with language models through four primary integration pat
 
 ```mermaid
 graph LR
-    Agent[Coding Agent: Codex or OpenCode] --> Direct[Direct API: OpenAI / Anthropic / Gemini]
+    Agent[Coding Agent: Codex / Claude Code / OpenCode] --> Direct[Direct API / Account: OpenAI / Anthropic / Gemini]
     Agent --> Cloud[Enterprise Cloud: Vertex AI / Azure OpenAI / Bedrock]
     Agent --> Proxy[OpenAI-Compatible: LiteLLM / vLLM / Ollama]
     Agent --> Subscription[Subscription Auth: ChatGPT / Workspace SSO]
@@ -29,9 +29,15 @@ graph LR
 
 ---
 
+## Claude Code uses a different provider model
+
+Claude Code is built around Claude models rather than acting as a generic wrapper around OpenAI, Gemini, or arbitrary OpenAI-compatible model APIs. Anthropic documents direct Claude account / Anthropic Console access plus supported enterprise deployment paths through Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry, and other Anthropic deployment options.
+
+That means the general preparation pattern in this repository transfers to Claude Code, while the model-provider configuration itself does not map one-to-one from Codex or OpenCode. See [`claude-code.md`](claude-code.md) and Anthropic's deployment overview: https://code.claude.com/docs/en/third-party-integrations
+
 ## Provider Matrix: Codex vs. OpenCode
 
-Codex and OpenCode handle provider configuration differently:
+Codex and OpenCode handle arbitrary provider configuration differently:
 
 | Provider Type | Codex Configuration | OpenCode Configuration |
 |---|---|---|

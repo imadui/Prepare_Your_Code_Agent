@@ -34,6 +34,9 @@ env/
 .coverage
 htmlcov/
 
+# Claude Code personal project overrides
+.claude/settings.local.json
+
 # Editor and OS artifacts
 .DS_Store
 Thumbs.db

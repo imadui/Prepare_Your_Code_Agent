@@ -1,8 +1,8 @@
 # Prepare Your Code Agent
 
-> Practical setup patterns for Codex and OpenCode.
+> Practical setup patterns for Codex, Claude Code, and OpenCode.
 
-Codex and OpenCode are useful out of the box, but the quality of the experience depends heavily on how the model, tools, instructions, and validation loop are configured.
+Codex, Claude Code, and OpenCode are useful out of the box, but the quality of the experience depends heavily on how the model, tools, instructions, permissions, and validation loop are configured.
 
 This repository provides a practical way to build that setup progressively: start with model connectivity, keep instructions small, add tools only when they solve a real problem, and validate the whole environment before relying on it.
 
@@ -12,6 +12,7 @@ This repository provides a practical way to build that setup progressively: star
 
 - **LLM providers:** Direct API, cloud-hosted enterprise endpoints (Vertex AI, Azure OpenAI), and local/OpenAI-compatible gateways.
 - **Codex configuration:** Hierarchical config (`config.toml`), profiles, sandboxing modes, and execution approval policies.
+- **Claude Code configuration:** Settings scopes, `CLAUDE.md` / `AGENTS.md`, permissions, hooks, MCP, skills, and project subagents.
 - **OpenCode configuration:** Core architecture, `opencode.json`, custom model adapters, and permission boundaries.
 - **Model Context Protocol (MCP):** Adding external tool servers deliberately without context bloat or schema collisions.
 - **Tools & tool profiles:** Selecting the right tools for the job (Minimal, Engineering, Browser) instead of enabling everything.
@@ -29,7 +30,7 @@ This repository provides a practical way to build that setup progressively: star
 
 ```mermaid
 flowchart TD
-    A[LLM Provider\nOpenAI / Gemini / Vertex / Anthropic / Azure] --> B[Coding Agent Core\nCodex or OpenCode]
+    A[LLM Provider / Account\nOpenAI / Anthropic / Gemini / Cloud Platforms] --> B[Coding Agent Core\nCodex / Claude Code / OpenCode]
     B --> C[Instructions Layer\nLean Global & Project AGENTS.md]
     C --> D[Capability Layer\nBuilt-in Tools + Selective MCP + Skills]
     D --> E[Subagents\nExplorer / Reviewer / Tester]
@@ -72,6 +73,7 @@ See [`docs/providers.md`](docs/providers.md) for full provider setup details.
 
 ### 3. Choose your agent runtime
 - For **Codex**, copy and adapt [`templates/codex/config.toml`](templates/codex/config.toml) and [`templates/codex/AGENTS.md`](templates/codex/AGENTS.md). Read [`docs/codex.md`](docs/codex.md).
+- For **Claude Code**, start with [`templates/claude-code/settings.json`](templates/claude-code/settings.json) and [`templates/claude-code/CLAUDE.md`](templates/claude-code/CLAUDE.md). Optional project subagent and skill examples are included under [`templates/claude-code/`](templates/claude-code/). Read [`docs/claude-code.md`](docs/claude-code.md).
 - For **OpenCode**, copy and adapt [`templates/opencode/opencode.json`](templates/opencode/opencode.json) and [`templates/opencode/AGENTS.md`](templates/opencode/AGENTS.md). Read [`docs/opencode.md`](docs/opencode.md).
 
 ### 4. Select a tool profile
@@ -107,6 +109,7 @@ Prepare_Your_Code_Agent/
 ├── docs/                       # Practical architecture and setup guides
 │   ├── providers.md            # Connecting and testing LLM providers
 │   ├── codex.md                # Codex configuration, sandboxing, and subagents
+│   ├── claude-code.md          # Claude Code settings, permissions, skills, hooks, and agents
 │   ├── opencode.md             # OpenCode setup, opencode.json, and agent modes
 │   ├── tools.md                # Tool curation, overload prevention, and profiles
 │   ├── skills-and-agents.md    # Instructions vs skills vs tools vs subagents
@@ -116,6 +119,7 @@ Prepare_Your_Code_Agent/
 │
 ├── templates/                  # Validated starter configurations
 │   ├── codex/                  # Sanitized config.toml, AGENTS.md, hooks.json
+│   ├── claude-code/            # settings.json, CLAUDE.md, reviewer agent, validation skill
 │   ├── opencode/               # Sanitized opencode.json, AGENTS.md
 │   └── providers/              # Provider-specific .env templates
 │
@@ -137,7 +141,7 @@ Prepare_Your_Code_Agent/
 1. **Test connectivity before tuning instructions.** If the API call fails or times out, fine-tuning `AGENTS.md` or system prompts is wasted effort.
 2. **A successful raw API ping does not mean the agent is configured.** Raw curl tests confirm network and credentials; agent execution validates prompt wrapping, tool registration, and output parsing.
 3. **More MCP servers do not automatically make a better agent.** Tool schemas, discovery metadata, and overlapping capabilities can add context and selection overhead. Keep only the tools that solve a real problem for the current workflow.
-4. **Permanent instructions should stay small.** Put only non-negotiable repository agreements in `AGENTS.md`. A short file is easier to maintain and leaves more room for task context; any line-count target is a project heuristic, not a Codex limit.
+4. **Permanent instructions should stay small.** Put only non-negotiable repository agreements in `AGENTS.md` or `CLAUDE.md`, depending on the runtime. A short file is easier to maintain and leaves more room for task context; any line-count target is a project heuristic, not a product limit.
 5. **Move specialized workflows into skills.** Complex, domain-specific tasks (e.g., database migrations, release packaging) belong in on-demand skills that load only when needed.
 6. **Subagents are most valuable for independent review.** Use subagents when read-only isolation or parallel exploration adds value. Do not spawn subagents for trivial edits.
 7. **Prefer workspace-local configuration over global changes.** An agent should never edit `~/.gitconfig`, global npm packages, or machine-wide environment variables to satisfy a local project task.
