@@ -40,9 +40,10 @@ flowchart TD
 - **Verification:**
   ```bash
   codex --version
+  claude --version
   opencode --version
   ```
-- **Pass Criteria:** Commands return clean version output without crashes or missing dynamic libraries.
+- **Pass Criteria:** The runtime(s) you intend to use return clean version output without crashes or missing dynamic libraries.
 
 ### Layer 3: Documentation Lookup
 - **Question:** Can the agent fetch up-to-date third-party documentation?
