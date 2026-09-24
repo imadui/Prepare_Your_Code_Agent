@@ -17,7 +17,7 @@ sys.path.insert(0, REPO_ROOT)
 from scripts.validation.safety_check import scan_repository
 
 
-def evaluate_workspace(workspace_dir):
+def evaluate_workspace(workspace_dir, test_command=None):
     checks = []
 
     # 1. Check Git status
@@ -41,7 +41,7 @@ def evaluate_workspace(workspace_dir):
             checks.append({
                 "name": "Git Status",
                 "passed": False,
-                "detail": "Git safe.directory issue detected. Run: git config --global --add safe.directory <path>"
+                "detail": "Git safe.directory issue detected. Resolve repository ownership or trust through your approved Git/workstation process; this validator does not modify global Git configuration."
             })
         else:
             checks.append({
@@ -128,9 +128,10 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate workspace acceptance criteria")
     parser.add_argument("--workspace", default=os.getcwd(), help="Path to workspace")
     parser.add_argument("--json", action="store_true", help="Output JSON")
+    parser.add_argument("--test-command", help="Optional test command to run instead of auto-detection")
     args = parser.parse_args()
 
-    res = evaluate_workspace(args.workspace)
+    res = evaluate_workspace(args.workspace, test_command=args.test_command)
     if args.json:
         print(json.dumps(res, indent=2))
     else:
