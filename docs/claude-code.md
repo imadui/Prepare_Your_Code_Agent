@@ -235,6 +235,7 @@ name: reviewer
 description: Independent review of completed changes for correctness, regressions, security, and missing tests.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+permissionMode: plan
 ---
 
 Review the actual diff and relevant source files.
