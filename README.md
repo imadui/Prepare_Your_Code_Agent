@@ -78,7 +78,7 @@ See [`docs/providers.md`](docs/providers.md) for full provider setup details.
 Review [`docs/tools.md`](docs/tools.md) to choose the profile that matches your workload:
 - **Minimal:** Shell + Git + Docs. Fast, inexpensive, lowest token footprint.
 - **Engineering:** Minimal + Context7 + GitHub MCP + Reviewer subagent. Standard for full-stack engineering.
-- **Browser:** Engineering + Playwright. Required when web UI interactions or DOM validation are needed.
+- **Browser:** Engineering + Playwright. Add it when web UI interactions or DOM validation are part of the task.
 
 ### 5. Validate the environment
 Run the end-to-end acceptance benchmark in an isolated sandbox:
@@ -111,7 +111,7 @@ tune-your-code-agent/
 │   ├── validation.md           # Layered 12-step verification ladder
 │   └── troubleshooting.md      # Matrix of common symptoms, root causes, and safe steps
 │
-├── templates/                  # Production-tested starter configurations
+├── templates/                  # Validated starter configurations
 │   ├── codex/                  # Sanitized config.toml, AGENTS.md, hooks.json
 │   ├── opencode/               # Sanitized opencode.json, AGENTS.md
 │   └── providers/              # Provider-specific .env templates
@@ -133,8 +133,8 @@ tune-your-code-agent/
 
 1. **Test connectivity before tuning instructions.** If the API call fails or times out, fine-tuning `AGENTS.md` or system prompts is wasted effort.
 2. **A successful raw API ping does not mean the agent is configured.** Raw curl tests confirm network and credentials; agent execution validates prompt wrapping, tool registration, and output parsing.
-3. **More MCP servers do not make a better agent.** Every registered tool consumes schema tokens on every turn. Two dozen tools create decision fatigue and hallucinated parameter calls.
-4. **Permanent instructions must stay small.** Put only non-negotiable repository agreements in `AGENTS.md` (< 150 lines). Large instruction files degrade instruction following.
+3. **More MCP servers do not automatically make a better agent.** Tool schemas, discovery metadata, and overlapping capabilities can add context and selection overhead. Keep only the tools that solve a real problem for the current workflow.
+4. **Permanent instructions should stay small.** Put only non-negotiable repository agreements in `AGENTS.md`. A short file is easier to maintain and leaves more room for task context; any line-count target is a project heuristic, not a Codex limit.
 5. **Move specialized workflows into skills.** Complex, domain-specific tasks (e.g., database migrations, release packaging) belong in on-demand skills that load only when needed.
 6. **Subagents are most valuable for independent review.** Use subagents when read-only isolation or parallel exploration adds value. Do not spawn subagents for trivial edits.
 7. **Prefer workspace-local configuration over global changes.** An agent should never edit `~/.gitconfig`, global npm packages, or machine-wide environment variables to satisfy a local project task.
@@ -151,7 +151,7 @@ This repository follows a strict public-safe standard:
 - **Zero hard-coded secrets:** All scripts read from standard environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.).
 - **No sensitive paths:** Documentation and templates use portable placeholders instead of machine-specific user profiles.
 - **Loopback-only networking:** Development servers and test fixtures must bind to `127.0.0.1` or `localhost`.
-- **Automated safety scans:** Run `python scripts/validation/safety_check.py` to check for accidental secret commits or sensitive paths.
+- **Repository-content safety scan:** Run `python scripts/validation/safety_check.py` to detect common secret patterns, sensitive file types, oversized artifacts, and user-specific paths. It does not prove machine-wide isolation or replace a dedicated secrets scanner.
 
 ---
 
