@@ -4,7 +4,7 @@ Thank you for your interest in improving practical patterns for autonomous codin
 
 ## Design Philosophy
 
-This project prioritizes direct, production-tested guidance over theoretical complexity:
+This project prioritizes practical, verifiable guidance over theoretical complexity:
 - **Keep it lean:** More configuration is not better configuration. Every proposed setting or tool must justify its overhead.
 - **Evidence first:** Configuration advice and workflows must be verifiable with reproducible commands or test scripts.
 - **No marketing buzzwords:** Write with the voice of an experienced automation engineer. Avoid hype words (*revolutionary*, *supercharge*, *game-changing*, etc.).
