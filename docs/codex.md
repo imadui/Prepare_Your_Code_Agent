@@ -86,8 +86,8 @@ Large permanent instructions waste context window space on every turn and dilute
 
 ## 4. Models and Providers in Codex
 
-### Default OpenAI Models
-Codex defaults to modern reasoning and coding models:
+### OpenAI model selection
+Codex works with current OpenAI coding-capable models. Choose based on capability, latency, and cost rather than assuming one fixed default:
 - `gpt-6-sol`: Workhorse model for complex coding, refactoring, and multi-step tasks.
 - `gpt-6-luna`: Fast, cost-efficient model for quick fixes, exploration, and high-volume operations.
 
@@ -215,7 +215,7 @@ Subagents inherit the parent's sandbox policy and return structured results to t
 ## 8. Git and Worktree Integration
 
 - **Native Review Pane:** Codex integrates with Git to track staged and unstaged diffs.
-- **Codex Worktrees:** In the desktop app and CLI, Codex can spin up isolated Git worktrees (`codex-managed worktree`) to explore experimental refactors without dirtying your main branch.
+- **Git worktrees:** Codex surfaces can use isolated Git worktrees so separate runs do not have to dirty the primary checkout. Treat worktree creation and cleanup as execution-context management rather than relying on an undocumented command name.
 - **Commit Hygiene:** Instructions should enforce concise, imperative commit messages and clean working trees before task completion.
 
 ---
