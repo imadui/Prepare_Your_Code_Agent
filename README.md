@@ -85,8 +85,11 @@ Run the end-to-end acceptance benchmark in an isolated sandbox:
 ```bash
 python scripts/validation/safety_check.py
 python -m unittest discover tests
+
+# Optional: mechanically evaluate an acceptance-test workspace
+python scripts/validation/run_acceptance.py --workspace /path/to/acceptance-workspace
 ```
-See [`docs/validation.md`](docs/validation.md) and [`examples/acceptance-test/`](examples/acceptance-test/).
+See [`docs/validation.md`](docs/validation.md) and [`examples/acceptance-test/`](examples/acceptance-test/). The automated validator covers only mechanically observable checks; use the checklist and transcript evidence for the remaining criteria.
 
 ---
 
