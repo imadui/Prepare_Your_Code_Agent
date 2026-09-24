@@ -17,10 +17,10 @@ import urllib.request
 def test_vertex(dry_run=False):
     project = os.environ.get("GOOGLE_CLOUD_PROJECT")
     location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
-    model = os.environ.get("VERTEX_MODEL", "gemini-2.5-pro")
+    model = os.environ.get("VERTEX_MODEL") or ("your-model-name" if dry_run else "")
 
-    if not project and not dry_run:
-        print("FAIL: GOOGLE_CLOUD_PROJECT is not set in environment.")
+    if not dry_run and (not project or not model):
+        print("FAIL: GOOGLE_CLOUD_PROJECT and VERTEX_MODEL must be set in environment.")
         return False
 
     if dry_run:
@@ -34,14 +34,14 @@ def test_vertex(dry_run=False):
 
     try:
         token_res = subprocess.run(
-            ["gcloud", "auth", "print-access-token"],
+            ["gcloud", "auth", "application-default", "print-access-token"],
             capture_output=True,
             text=True,
             timeout=10,
             check=False
         )
         if token_res.returncode != 0:
-            print("FAIL: Failed to obtain access token from gcloud. Run: gcloud auth application-default login")
+            print("FAIL: Failed to obtain an ADC access token. Run the documented Application Default Credentials login flow")
             return False
         access_token = token_res.stdout.strip()
     except Exception as e:
