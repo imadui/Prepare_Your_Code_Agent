@@ -15,10 +15,10 @@ import urllib.request
 def test_anthropic(dry_run=False):
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     base_url = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1").rstrip("/")
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
+    model = os.environ.get("ANTHROPIC_MODEL") or ("your-model-name" if dry_run else "")
 
-    if not api_key and not dry_run:
-        print("FAIL: ANTHROPIC_API_KEY is not set in environment.")
+    if not dry_run and (not api_key or not model):
+        print("FAIL: ANTHROPIC_API_KEY and ANTHROPIC_MODEL must be set in environment.")
         return False
 
     payload = {
