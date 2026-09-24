@@ -8,6 +8,7 @@ defined in examples/acceptance-test/checklist.md.
 import argparse
 import json
 import os
+import shlex
 import subprocess
 import sys
 
@@ -54,27 +55,46 @@ def evaluate_workspace(workspace_dir, test_command=None):
 
     # 2. Check for Automated Tests and Execution
     test_dir = os.path.join(workspace_dir, "tests")
-    tests_exist = os.path.exists(test_dir)
-    if tests_exist:
+    package_json = os.path.join(workspace_dir, "package.json")
+    command = None
+
+    if test_command:
+        command = shlex.split(test_command, posix=os.name != "nt")
+    elif os.path.isfile(package_json):
+        try:
+            with open(package_json, "r", encoding="utf-8") as f:
+                package = json.load(f)
+            if package.get("scripts", {}).get("test"):
+                command = ["npm", "test"]
+        except (OSError, json.JSONDecodeError):
+            pass
+    elif os.path.isdir(test_dir):
+        command = [sys.executable, "-m", "unittest", "discover", "tests"]
+
+    if command:
         try:
             test_run = subprocess.run(
-                [sys.executable, "-m", "unittest", "discover", "tests"],
+                command,
                 cwd=workspace_dir,
                 capture_output=True,
                 text=True,
-                timeout=45,
+                timeout=90,
                 check=False
             )
             tests_passed = test_run.returncode == 0
             checks.append({
                 "name": "Automated Tests",
                 "passed": tests_passed,
-                "detail": "All tests passed (exit 0)" if tests_passed else "Test suite reported failures"
+                "detail": f"{' '.join(command)} exited 0" if tests_passed else f"{' '.join(command)} exited {test_run.returncode}"
             })
         except Exception as e:
             checks.append({"name": "Automated Tests", "passed": False, "detail": f"Execution error: {e}"})
     else:
-        checks.append({"name": "Automated Tests", "passed": False, "detail": "tests/ directory not found"})
+        checks.append({
+            "name": "Automated Tests",
+            "passed": False,
+            "detail": "No supported test command detected. Pass --test-command explicitly."
+        })
 
     # 3. Security & Secrets Scanner
     findings = scan_repository(workspace_dir, quick=False)
