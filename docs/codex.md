@@ -22,8 +22,8 @@ codex --version
 ### Authentication Options
 Codex supports two authentication methods:
 
-1. **ChatGPT Sign-in (Plus, Pro, Team, Enterprise, Edu):**
-   Authenticate via browser OAuth handshake. Uses account-level access and workspace model quotas:
+1. **ChatGPT sign-in:**
+   Authenticate through the browser/account flow. Availability, models, and usage limits depend on the current ChatGPT plan and workspace policy:
    ```bash
    codex login
    ```
