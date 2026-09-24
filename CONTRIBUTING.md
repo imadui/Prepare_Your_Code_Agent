@@ -1,4 +1,4 @@
-# Contributing to Tune Your Code Agent
+# Contributing to Prepare Your Code Agent
 
 Thank you for your interest in improving practical patterns for autonomous coding agents.
 

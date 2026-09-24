@@ -1,4 +1,4 @@
-# Tune Your Code Agent
+# Prepare Your Code Agent
 
 > Practical setup patterns for Codex and OpenCode.
 
@@ -96,7 +96,7 @@ See [`docs/validation.md`](docs/validation.md) and [`examples/acceptance-test/`]
 ## Repository structure
 
 ```text
-tune-your-code-agent/
+Prepare_Your_Code_Agent/
 ├── README.md                   # Project overview and quick start
 ├── LICENSE                     # MIT license
 ├── SECURITY.md                 # Security, privacy, and vulnerability reporting

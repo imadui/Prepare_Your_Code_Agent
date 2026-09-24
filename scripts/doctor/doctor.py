@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Environment Doctor for Tune Your Code Agent.
+Environment Doctor for Prepare Your Code Agent.
 Checks runtime dependencies, CLI availability, provider environment variable
 presence (without printing values), git status, and temporary directory hygiene.
 """
@@ -148,7 +148,7 @@ def run_doctor():
 
 def print_human_report(data):
     print("==================================================")
-    print(" Tune Your Code Agent - Environment Doctor")
+    print(" Prepare Your Code Agent - Environment Doctor")
     print("==================================================")
     print(f"OS: {data['os']['system']} {data['os']['release']} ({data['os']['machine']})")
     print("\n--- Command-Line Tools ---")
@@ -179,7 +179,7 @@ def print_human_report(data):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Environment Doctor for Tune Your Code Agent")
+    parser = argparse.ArgumentParser(description="Environment Doctor for Prepare Your Code Agent")
     parser.add_argument("--json", action="store_true", help="Output doctor report as JSON")
     args = parser.parse_args()
 
