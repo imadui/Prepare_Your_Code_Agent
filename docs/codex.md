@@ -78,7 +78,7 @@ Codex reads `AGENTS.md` before starting work. It discovers instructions in a spe
 
 ### Best Practice: Keep AGENTS.md Small
 Large permanent instructions waste context window space on every turn and dilute model attention.
-- Keep root `AGENTS.md` under 150 lines.
+- Keep root `AGENTS.md` concise. If your team uses a line-count target, treat it as a local heuristic rather than a Codex product limit.
 - Restrict content to non-negotiable repository agreements (test commands, lint rules, loopback binding, commit conventions).
 - Move task-specific workflows into on-demand **skills**.
 
@@ -110,16 +110,10 @@ env_key = "OPENAI_API_KEY"
 wire_api = "responses" # or "chat_completions"
 ```
 
-### Built-in Amazon Bedrock
-Codex includes native Bedrock integration:
-```toml
-model_provider = "amazon-bedrock"
-model = "anthropic.claude-3-7-sonnet-20250219-v1:0"
+### Amazon Bedrock
+Codex can route supported OpenAI models through Amazon Bedrock. Model IDs and regional availability are Bedrock-specific, so verify the current AWS/OpenAI compatibility guide before copying an example.
 
-[model_providers.amazon-bedrock.aws]
-profile = "default"
-region = "us-east-1"
-```
+For GPT-6 Sol in a supported `us-east-1` deployment, Bedrock uses an `openai.gpt-6-sol` model ID (or the corresponding Runtime inference-profile ID when using Bedrock Runtime). Do not assume that unrelated third-party Bedrock model IDs are interchangeable with Codex model-provider configuration.
 
 ### Local OSS Mode
 Run against local Ollama or LM Studio models:
