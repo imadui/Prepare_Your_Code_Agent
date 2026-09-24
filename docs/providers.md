@@ -13,9 +13,9 @@ Coding agents interact with language models through four primary integration pat
 1. **Direct SaaS API (OpenAI, Anthropic, Google AI Studio):**
    Direct HTTP requests to the vendor's API gateway authenticated via an API key in a request header (`Authorization: Bearer <key>` or `x-api-key`). Best for developer experimentation and standard projects.
 2. **Cloud-Hosted Enterprise Endpoints (Google Cloud Vertex AI, Azure OpenAI, Amazon Bedrock):**
-   Models deployed inside an enterprise cloud tenant. Authentication relies on IAM tokens, managed identities, or OAuth2 service credentials (e.g., Google Application Default Credentials or Azure AD). Required when strict data sovereignty, VPC peering, and enterprise compliance agreements are mandated.
+   Models deployed inside an enterprise cloud tenant. Authentication relies on IAM tokens, managed identities, or OAuth2 service credentials (e.g., Google Application Default Credentials or Azure AD). Common when cloud IAM, regional controls, private networking, or enterprise compliance requirements matter.
 3. **OpenAI-Compatible Gateways (LiteLLM, vLLM, Ollama, Groq, OpenRouter):**
-   Intermediary proxies or self-hosted runtimes exposing the standard `/v1/chat/completions` schema. Useful for routing, load balancing, fallback logic, or hosting open-weight models locally.
+   Intermediary proxies or self-hosted runtimes exposing an OpenAI-compatible API such as `/v1/chat/completions` and, where implemented, `/v1/responses`. Useful for routing, load balancing, fallback logic, or hosting open-weight models locally.
 4. **Product-Native Subscription Authentication:**
    Account-level login sessions managed by the agent itself (such as ChatGPT Plus/Team/Enterprise subscription sign-in in Codex). Uses OAuth browser handshakes or token refresh loops rather than raw developer API keys.
 
@@ -36,19 +36,19 @@ Codex and OpenCode handle provider configuration differently:
 | Provider Type | Codex Configuration | OpenCode Configuration |
 |---|---|---|
 | **OpenAI** | Built-in default provider; set `OPENAI_API_KEY` or sign in via ChatGPT. | Native provider or `@ai-sdk/openai` in `opencode.json`. |
-| **Anthropic Claude** | Supported via custom proxy or Bedrock (`amazon-bedrock`). | Native provider (`anthropic`) with `ANTHROPIC_API_KEY`. |
+| **Anthropic Claude** | Use a compatible custom provider/proxy when your Codex runtime supports the required wire API. Do not infer support from Amazon Bedrock model availability alone. | Built-in/catalog provider support; authenticate through OpenCode's provider flow or environment-backed configuration. |
 | **Google Gemini API** | Supported via custom OpenAI-compatible proxy (LiteLLM/router). | Native provider (`google`) with `GEMINI_API_KEY`. |
-| **Gemini on Vertex AI** | Supported via enterprise proxy or LiteLLM. | Configured via `@ai-sdk/google-vertex` or custom adapter. |
-| **Azure OpenAI** | Dedicated `[model_providers.<id>]` table with `wire_api = "responses"` or `"chat_completions"`. | Configured via `@ai-sdk/azure` or `@ai-sdk/openai-compatible`. |
-| **OpenAI-Compatible** | Defined in `[model_providers.<id>]` in `~/.codex/config.toml`. | Defined in `provider.<id>` in `opencode.json` using `@ai-sdk/openai-compatible`. |
-| **Local OSS (Ollama/LM Studio)** | `--oss` flag with `oss_provider = "ollama"` in `config.toml`. | Custom provider pointing to `http://localhost:11434/v1`. |
+| **Gemini on Vertex AI** | Commonly routed through an OpenAI-compatible gateway when direct provider support is not available in the active Codex runtime. | V2 uses the `google-vertex` provider and Application Default Credentials (ADC), with project/location settings or supported environment variables. |
+| **Azure OpenAI** | Configure a suitable custom model provider and the wire API required by the endpoint. | V2 can use the built-in Azure runtime package or a compatible custom provider. |
+| **OpenAI-Compatible** | Defined in `[model_providers.<id>]` in Codex user configuration. | V2 defines custom providers under `providers.<id>` using an OpenCode runtime package such as `@opencode/ai/providers/openai-compatible`. |
+| **Local OSS (Ollama/LM Studio)** | Use Codex local/OSS provider support where available. | V2 includes local runtime discovery for Ollama, LM Studio, and vLLM; endpoints can be overridden with provider settings. |
 
 ---
 
 ## 1. OpenAI Direct API
 
 ### Overview
-Standard OpenAI developer access using `/v1/chat/completions` or the Responses API (`/v1/responses`).
+Standard OpenAI developer access. For GPT-6 tool-calling and agentic workflows, prefer the Responses API (`/v1/responses`).
 
 ### Environment Variables
 ```bash
@@ -60,13 +60,13 @@ export OPENAI_MODEL="gpt-6-sol"
 
 ### Raw Verification (curl)
 ```bash
-curl https://api.openai.com/v1/chat/completions \
+curl https://api.openai.com/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d '{
     "model": "gpt-6-sol",
-    "messages": [{"role": "user", "content": "ping"}],
-    "max_tokens": 10
+    "input": "ping",
+    "max_output_tokens": 10
   }'
 ```
 
@@ -85,12 +85,12 @@ Direct developer API for Gemini models hosted at `generativelanguage.googleapis.
 ### Environment Variables
 ```bash
 export GEMINI_API_KEY="your-gemini-api-key-here"
-export GEMINI_MODEL="gemini-2.5-pro"
+export GEMINI_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl)
 ```bash
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" \
+curl "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent" \
   -H "Content-Type: application/json" \
   -H "x-goog-api-key: $GEMINI_API_KEY" \
   -d '{
@@ -123,7 +123,7 @@ Enterprise-grade deployment of Gemini hosted within Google Cloud Platform. Does 
 ```bash
 export GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
 export GOOGLE_CLOUD_LOCATION="us-central1"
-export VERTEX_MODEL="gemini-2.5-pro"
+export VERTEX_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl with gcloud token)
@@ -154,7 +154,7 @@ Direct API for Anthropic models using the Messages API (`/v1/messages`). Require
 ### Environment Variables
 ```bash
 export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
-export ANTHROPIC_MODEL="claude-3-7-sonnet-20250219"
+export ANTHROPIC_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl)
@@ -164,7 +164,7 @@ curl https://api.anthropic.com/v1/messages \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -d '{
-    "model": "claude-3-7-sonnet-20250219",
+    "model": "your-model-name",
     "messages": [{"role": "user", "content": "ping"}],
     "max_tokens": 10
   }'
@@ -187,7 +187,7 @@ Azure-hosted OpenAI instances. In Azure, calls route to a deployment name rather
 export AZURE_OPENAI_API_KEY="your-azure-api-key-here"
 export AZURE_OPENAI_ENDPOINT="https://your-resource-name.openai.azure.com"
 export AZURE_OPENAI_DEPLOYMENT="your-deployment-name"
-export AZURE_OPENAI_API_VERSION="2024-08-01-preview"
+export AZURE_OPENAI_API_VERSION="your-api-version"
 ```
 
 ### Raw Verification (curl)

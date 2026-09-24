@@ -25,9 +25,10 @@ class TestTemplates(unittest.TestCase):
         self.assertTrue(os.path.exists(path), f"Missing {path}")
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        self.assertIn("agent", data)
-        self.assertIn("provider", data)
+        self.assertIn("agents", data)
+        self.assertIn("providers", data)
         self.assertIn("mcp", data)
+        self.assertIn("servers", data["mcp"])
 
     def test_codex_hooks_json_valid(self):
         path = os.path.join(self.root, "templates", "codex", "hooks.json")

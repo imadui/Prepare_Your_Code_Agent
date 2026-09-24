@@ -22,8 +22,8 @@ codex --version
 ### Authentication Options
 Codex supports two authentication methods:
 
-1. **ChatGPT Sign-in (Plus, Pro, Team, Enterprise, Edu):**
-   Authenticate via browser OAuth handshake. Uses account-level access and workspace model quotas:
+1. **ChatGPT sign-in:**
+   Authenticate through the browser/account flow. Availability, models, and usage limits depend on the current ChatGPT plan and workspace policy:
    ```bash
    codex login
    ```
@@ -78,7 +78,7 @@ Codex reads `AGENTS.md` before starting work. It discovers instructions in a spe
 
 ### Best Practice: Keep AGENTS.md Small
 Large permanent instructions waste context window space on every turn and dilute model attention.
-- Keep root `AGENTS.md` under 150 lines.
+- Keep root `AGENTS.md` concise. If your team uses a line-count target, treat it as a local heuristic rather than a Codex product limit.
 - Restrict content to non-negotiable repository agreements (test commands, lint rules, loopback binding, commit conventions).
 - Move task-specific workflows into on-demand **skills**.
 
@@ -86,8 +86,8 @@ Large permanent instructions waste context window space on every turn and dilute
 
 ## 4. Models and Providers in Codex
 
-### Default OpenAI Models
-Codex defaults to modern reasoning and coding models:
+### OpenAI model selection
+Codex works with current OpenAI coding-capable models. Choose based on capability, latency, and cost rather than assuming one fixed default:
 - `gpt-6-sol`: Workhorse model for complex coding, refactoring, and multi-step tasks.
 - `gpt-6-luna`: Fast, cost-efficient model for quick fixes, exploration, and high-volume operations.
 
@@ -110,16 +110,10 @@ env_key = "OPENAI_API_KEY"
 wire_api = "responses" # or "chat_completions"
 ```
 
-### Built-in Amazon Bedrock
-Codex includes native Bedrock integration:
-```toml
-model_provider = "amazon-bedrock"
-model = "anthropic.claude-3-7-sonnet-20250219-v1:0"
+### Amazon Bedrock
+Codex can route supported OpenAI models through Amazon Bedrock. Model IDs and regional availability are Bedrock-specific, so verify the current AWS/OpenAI compatibility guide before copying an example.
 
-[model_providers.amazon-bedrock.aws]
-profile = "default"
-region = "us-east-1"
-```
+For GPT-6 Sol in a supported `us-east-1` deployment, Bedrock uses an `openai.gpt-6-sol` model ID (or the corresponding Runtime inference-profile ID when using Bedrock Runtime). Do not assume that unrelated third-party Bedrock model IDs are interchangeable with Codex model-provider configuration.
 
 ### Local OSS Mode
 Run against local Ollama or LM Studio models:
@@ -221,7 +215,7 @@ Subagents inherit the parent's sandbox policy and return structured results to t
 ## 8. Git and Worktree Integration
 
 - **Native Review Pane:** Codex integrates with Git to track staged and unstaged diffs.
-- **Codex Worktrees:** In the desktop app and CLI, Codex can spin up isolated Git worktrees (`codex-managed worktree`) to explore experimental refactors without dirtying your main branch.
+- **Git worktrees:** Codex surfaces can use isolated Git worktrees so separate runs do not have to dirty the primary checkout. Treat worktree creation and cleanup as execution-context management rather than relying on an undocumented command name.
 - **Commit Hygiene:** Instructions should enforce concise, imperative commit messages and clean working trees before task completion.
 
 ---

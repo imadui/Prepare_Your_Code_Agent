@@ -16,10 +16,10 @@ def test_azure(dry_run=False):
     api_key = os.environ.get("AZURE_OPENAI_API_KEY")
     endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "").rstrip("/")
     deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
-    api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-08-01-preview")
+    api_version = os.environ.get("AZURE_OPENAI_API_VERSION") or ("your-api-version" if dry_run else "")
 
-    if not dry_run and (not api_key or not endpoint or not deployment):
-        print("FAIL: AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, or AZURE_OPENAI_DEPLOYMENT is missing.")
+    if not dry_run and (not api_key or not endpoint or not deployment or not api_version):
+        print("FAIL: AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT, or AZURE_OPENAI_API_VERSION is missing.")
         return False
 
     payload = {

@@ -1,15 +1,16 @@
 {
-  "description": "Example Codex lifecycle hooks for workspace safety and validation",
+  "description": "Example post-edit repository safety hook. Review and trust hooks before enabling them.",
   "hooks": {
-    "PreToolUse": [
+    "PostToolUse": [
       {
-        "matcher": "^Bash$",
+        "matcher": "Edit|Write|apply_patch",
         "hooks": [
           {
             "type": "command",
-            "command": "python scripts/validation/safety_check.py --quick",
-            "timeout": 10,
-            "statusMessage": "Verifying repository safety before command execution"
+            "command": "python -c \"import pathlib,subprocess,sys; root=pathlib.Path(subprocess.check_output(['git','rev-parse','--show-toplevel'], text=True).strip()); sys.exit(subprocess.call([sys.executable, str(root/'scripts'/'validation'/'safety_check.py'), '--quick'], cwd=root))\"",
+            "async": true,
+            "timeout": 30,
+            "statusMessage": "Checking repository safety after file changes"
           }
         ]
       }

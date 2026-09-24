@@ -10,7 +10,7 @@ multi_agent = true
 hooks = true
 
 [sandbox_workspace_write]
-network_access = true  # Required for browser network loopback requests
+network_access = true  # Enable only when sandboxed commands need network access
 
 [shell_environment_policy]
 inherit = "core"
@@ -37,7 +37,7 @@ default_tools_approval_mode = "auto"
 
 [mcp_servers.playwright]
 command = "npx"
-args = ["-y", "@modelcontextprotocol/server-playwright"]
+args = ["-y", "@playwright/mcp@latest"]
 enabled = true
 default_tools_approval_mode = "auto"
 

@@ -15,10 +15,10 @@ import urllib.request
 def test_compatible(dry_run=False):
     base_url = os.environ.get("COMPATIBLE_BASE_URL", "").rstrip("/")
     api_key = os.environ.get("COMPATIBLE_API_KEY", "dummy-key")
-    model = os.environ.get("COMPATIBLE_MODEL", "default-model")
+    model = os.environ.get("COMPATIBLE_MODEL") or ("your-model-name" if dry_run else "")
 
-    if not base_url and not dry_run:
-        print("FAIL: COMPATIBLE_BASE_URL is not set in environment.")
+    if not dry_run and (not base_url or not model):
+        print("FAIL: COMPATIBLE_BASE_URL and COMPATIBLE_MODEL must be set in environment.")
         return False
 
     payload = {

@@ -8,17 +8,17 @@ More tools do not produce a smarter agent. They consume context tokens, confuse 
 
 ## The Cost of Tool Overload
 
-Every tool registered with an agent injects its JSON Schema into the model's system prompt on **every single turn**.
+Registered tools can add schema, discovery, and tool-selection overhead. The exact context cost depends on the runtime and whether it supports selective or deferred tool loading.
 
 ```mermaid
 graph LR
-    Prompt[Prompt Window] --> Instructions[Permanent Instructions\n~1,000 tokens]
-    Prompt --> History[Conversation Turns\n~10,000+ tokens]
-    Prompt --> ToolSchemas[Tool Schemas\n25 Tools = 8,000 to 15,000 tokens!]
+    Prompt[Prompt Window] --> Instructions[Permanent Instructions]
+    Prompt --> History[Conversation Turns]
+    Prompt --> ToolSchemas[Tool Schemas / Discovery Metadata]
 ```
 
 ### Why Overloading Fails in Practice:
-1. **Context Window Tax:** 20 tools can easily consume 8,000 to 15,000 tokens before the user prompt is even read.
+1. **Context and discovery overhead:** Large tool catalogs can consume prompt space or require extra discovery steps, depending on the runtime.
 2. **Tool Selection Ambiguity:** When an agent has 3 different ways to search for files (built-in shell `find`, MCP filesystem tool, and a custom search tool), the model often hesitates, hallucinates arguments, or picks suboptimal tools.
 3. **Increased Latency:** Larger prompt payloads directly increase time-to-first-token (TTFT) on every turn.
 4. **Brittle Execution:** More external tool processes create more points of failure (broken pipes, port conflicts, process crashes).
@@ -61,7 +61,7 @@ Rather than enabling everything globally, organize your agent configurations int
 - **Tools:** Shell, Git, built-in file editor.
 - **MCP Servers:** None.
 - **Subagents:** None.
-- **Context Footprint:** Very low (< 1,500 tokens).
+- **Context Footprint:** Low.
 - **Speed:** Maximum.
 
 ### Profile 2: ENGINEERING (Recommended Default)
@@ -70,7 +70,7 @@ Rather than enabling everything globally, organize your agent configurations int
 - **Tools:** Shell, Git, built-in file editor.
 - **MCP Servers:** Context7 (live library docs), GitHub MCP (PR/issue sync).
 - **Subagents:** `reviewer` (read-only code review), `tester` (test execution).
-- **Context Footprint:** Moderate (~4,000–6,000 tokens).
+- **Context Footprint:** Medium.
 - **Reliability:** High; provides fresh documentation and independent verification.
 
 ### Profile 3: BROWSER
@@ -78,7 +78,7 @@ Rather than enabling everything globally, organize your agent configurations int
 
 - **Tools:** Engineering Profile + Playwright MCP server.
 - **Subagents:** `reviewer`, `tester`.
-- **Context Footprint:** High (~8,000–12,000 tokens).
+- **Context Footprint:** High.
 - **Rule:** Enforce loopback-only binding (`http://127.0.0.1:<port>`). Close browser sessions immediately when verification finishes.
 
 ---
@@ -87,14 +87,14 @@ Rather than enabling everything globally, organize your agent configurations int
 
 | Tool / MCP Server | What it solves | When to add it | When not to add it | Auth Required? | Context Cost |
 |---|---|---|---|---|---|
-| **Shell (`exec_command`)** | Running tests, builds, git, and local scripts. | Always (baseline agent engine). | Read-only analysis tasks. | No (inherits process) | Low (500 tokens) |
-| **File Editor (`apply_patch`)** | Precise multi-file updates and unified diffs. | Always. | Read-only audit tasks. | No | Low (400 tokens) |
-| **Context7 MCP** | Up-to-date documentation and code examples. | Using external libraries/frameworks. | Pure standard library or internal-only code. | No (public tier) or API key | Medium (~1,200 tokens) |
-| **GitHub MCP** | PRs, issue updates, review threads, and diff checks. | CI/CD pipelines, PR reviews, automated release notes. | Offline or local-only feature implementation. | Yes (`GITHUB_TOKEN`) | High (~2,500–4,000 tokens) |
-| **Playwright MCP** | Programmatic browser testing, DOM checks, screenshots. | Web app frontend verification on loopback servers. | Backend APIs, CLI tools, libraries. | No | High (~3,000–5,000 tokens) |
-| **Computer Use** | Native desktop UI control via mouse/keystroke coordinates. | Legacy desktop applications with zero APIs or CLIs. | Any web or CLI workflow. | No | Very High (~6,000+ tokens) |
-| **Database MCP** | Querying staging or dev database schemas directly. | Complex SQL migration authoring and schema inspection. | General coding; risks accidental production writes. | Yes (DB credentials) | Medium (~1,500 tokens) |
-| **Slack / Email MCP** | Sending messages and team notifications. | Dedicated communication automations. | Core coding tasks (distracts agent and leaks tokens). | Yes (OAuth/Token) | High (~3,000 tokens) |
+| **Shell (`exec_command`)** | Running tests, builds, git, and local scripts. | Always (baseline agent engine). | Read-only analysis tasks. | No (inherits process) | Low |
+| **File Editor (`apply_patch`)** | Precise multi-file updates and unified diffs. | Always. | Read-only audit tasks. | No | Low |
+| **Context7 MCP** | Up-to-date documentation and code examples. | Using external libraries/frameworks. | Pure standard library or internal-only code. | No (public tier) or API key | Medium |
+| **GitHub MCP** | PRs, issue updates, review threads, and diff checks. | CI/CD pipelines, PR reviews, automated release notes. | Offline or local-only feature implementation. | Yes (`GITHUB_TOKEN`) | Medium to High |
+| **Playwright MCP** | Programmatic browser testing, DOM checks, screenshots. | Web app frontend verification on loopback servers. | Backend APIs, CLI tools, libraries. | No | High |
+| **Computer Use** | Native desktop UI control via mouse/keystroke coordinates. | Desktop workflows with no suitable API/CLI or browser automation path. | Prefer deterministic tools when available. | Depends on environment | Very High |
+| **Database MCP** | Querying staging or dev database schemas directly. | Complex SQL migration authoring and schema inspection. | General coding; risks accidental production writes. | Yes (DB credentials) | Medium |
+| **Slack / Email MCP** | Sending messages and team notifications. | Dedicated communication automations. | Core coding tasks (distracts agent and leaks tokens). | Yes (OAuth/Token) | High |
 
 ---
 

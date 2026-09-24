@@ -84,7 +84,7 @@ def check_git_repo(repo_dir=REPO_ROOT):
             if "dubious ownership" in (res.stderr or "").lower():
                 return {
                     "is_git_repo": True,
-                    "status": "Dubious ownership detected. Run: git config --global --add safe.directory <path>",
+                    "status": "Dubious ownership detected. Resolve repository ownership or trust through your approved Git/workstation process; this doctor does not modify global Git configuration.",
                     "safe_directory_needed": True
                 }
             return {"is_git_repo": False, "status": "Not a git repository"}

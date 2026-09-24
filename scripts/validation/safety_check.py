@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Repository Safety and Secrets Scanner.
-Scans the workspace for:
-- Tracked .env or credential files
-- Private keys, certificates, and database binaries
-- Hardcoded secret patterns (OpenAI, GitHub, AWS, Anthropic keys)
-- Machine-specific user paths (e.g., C:\\Users\\...)
-- Lingering temporary artifacts outside .agent-tmp/
+Repository-content safety scanner.
+Scans the selected workspace for common publication risks:
+- Credential-like filenames and sensitive file extensions
+- Common hardcoded secret patterns
+- Machine-specific Windows user paths
+- Unexpected large files
+
+This is a repository-content check, not proof of machine-wide isolation and not a replacement for a dedicated secrets scanner.
 """
 
 import argparse
@@ -42,26 +43,8 @@ IGNORED_DIRS = {
 }
 
 
-def get_git_tracked_files(root_dir):
-    try:
-        res = subprocess.run(
-            ["git", "ls-files"],
-            cwd=root_dir,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if res.returncode == 0:
-            return set(res.stdout.splitlines())
-    except Exception:
-        pass
-    return None
-
-
 def scan_repository(root_dir, quick=False):
     findings = []
-    tracked_files = get_git_tracked_files(root_dir)
-
     for dirpath, dirnames, filenames in os.walk(root_dir):
         # Filter out ignored directories
         dirnames[:] = [d for d in dirnames if d not in IGNORED_DIRS]
@@ -141,7 +124,7 @@ def main():
         print(" Repository Safety Check")
         print("==================================================")
         if not findings:
-            print("[PASS] No sensitive files, credentials, or dangerous patterns found.")
+            print("[PASS] No configured repository-content safety findings detected.")
         else:
             print(f"[FAIL] Found {len(findings)} potential safety issues:")
             for item in findings:

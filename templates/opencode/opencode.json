@@ -1,60 +1,52 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "agent": {
-    "build": {
-      "mode": "primary",
-      "model": "anthropic/claude-3-7-sonnet-20250219",
-      "permission": {
-        "edit": "allow",
-        "bash": "allow"
-      }
-    },
-    "plan": {
-      "mode": "primary",
-      "model": "openai/gpt-6-luna",
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "code-reviewer": {
-      "description": "Reviews code diffs for security, performance, and architecture.",
-      "mode": "subagent",
-      "model": "anthropic/claude-3-7-sonnet-20250219",
-      "prompt": "You are a senior code reviewer. You have read-only access. Review git diffs thoroughly and report concrete defects.",
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
-    }
-  },
-  "provider": {
-    "custom-proxy": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Custom OpenAI Gateway",
-      "options": {
-        "baseURL": "https://llm-gateway.example.com/v1",
-        "apiKey": "{env:OPENAI_API_KEY}"
+  "model": "company/coder",
+  "providers": {
+    "company": {
+      "name": "Custom OpenAI-compatible Gateway",
+      "env": ["COMPANY_GATEWAY_KEY"],
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "https://gateway.example.com/v1"
       },
       "models": {
-        "gpt-6-sol": {
-          "name": "GPT-6 Sol",
-          "limit": {
-            "context": 128000,
-            "output": 8192
-          }
+        "coder": {
+          "modelID": "your-model-name",
+          "name": "Coding Model"
         }
       }
     }
   },
-  "mcp": {
-    "context7": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@upstash/context7-mcp"
+  "agents": {
+    "reviewer": {
+      "description": "Independent review for correctness, regressions, security, and missing tests.",
+      "mode": "subagent",
+      "system": "Review the actual diff. Report concrete findings and evidence. Do not modify files.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
       ]
+    },
+    "tester": {
+      "description": "Run relevant tests and report factual evidence.",
+      "mode": "subagent",
+      "system": "Verify behavior using the repository's test commands. Avoid unrelated changes.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "ask" },
+        { "action": "shell", "resource": "git status*", "effect": "allow" },
+        { "action": "shell", "resource": "python -m unittest*", "effect": "allow" },
+        { "action": "shell", "resource": "pytest*", "effect": "allow" },
+        { "action": "shell", "resource": "npm test*", "effect": "allow" }
+      ]
+    }
+  },
+  "mcp": {
+    "servers": {
+      "context7": {
+        "type": "local",
+        "command": ["npx", "-y", "@upstash/context7-mcp"]
+      }
     }
   }
 }

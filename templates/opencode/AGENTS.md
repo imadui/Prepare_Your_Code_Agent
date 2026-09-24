@@ -8,7 +8,9 @@
 - **Clean Diff:** Run project linters and tests before requesting review.
 - **No Hardcoded Secrets:** Read all credentials from `{env:...}` variables.
 
-## External Rules
-When working on specific subsystems, load the corresponding guidelines using your Read tool:
-- Security & Privacy: @docs/guardrails.md
-- Tool Configuration: @docs/tools.md
+## Supporting Guidelines
+Read the relevant repository guidance when the task needs it:
+- Security and privacy work: `docs/guardrails.md`
+- Tool or MCP configuration: `docs/tools.md`
+
+Do not assume that mentioning a path automatically loads it; explicitly read the file when it is relevant.

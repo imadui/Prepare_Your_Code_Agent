@@ -14,10 +14,10 @@ import urllib.request
 
 def test_gemini(dry_run=False):
     api_key = os.environ.get("GEMINI_API_KEY")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
+    model = os.environ.get("GEMINI_MODEL") or ("your-model-name" if dry_run else "")
 
-    if not api_key and not dry_run:
-        print("FAIL: GEMINI_API_KEY is not set in environment.")
+    if not dry_run and (not api_key or not model):
+        print("FAIL: GEMINI_API_KEY and GEMINI_MODEL must be set in environment.")
         return False
 
     payload = {
