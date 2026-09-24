@@ -16,7 +16,7 @@ An agent tasked with working on a specific repository must never touch files out
   - Never run `git config --global` (use `git config --local` or temporary environment variables instead).
   - Never run `npm install -g` or `pip install` globally (use virtual environments: `.venv/` or project `node_modules/`).
   - Never modify system-wide PATH or persistent registry/environment settings.
-- **Sandbox enforcement:** Enable filesystem sandboxing (`sandbox_mode = "workspace-write"` in Codex, or explicit agent permissions in OpenCode).
+- **Sandbox / permission enforcement:** Use the runtime's native control layer: `sandbox_mode = "workspace-write"` in Codex, explicit `permissions` in Claude Code `.claude/settings.json`, or explicit agent permissions in OpenCode.
 
 ```mermaid
 graph TD
@@ -52,7 +52,7 @@ Coding agents process thousands of tokens of code, logs, and command outputs. If
 1. **Read from Environment Variables:** Always consume secrets via environment variables (`OPENAI_API_KEY`, `DATABASE_URL`).
 2. **Zero Hardcoded Secrets:** Never embed keys, tokens, passwords, or connection strings in code, configuration files, test fixtures, or prompts.
 3. **Strict `.gitignore`:** Ensure `.env`, `.env.*`, `credentials/`, `*.pem`, `*.key`, and `*.pfx` are tracked by `.gitignore`.
-4. **Shell Environment Scrubbing:** Use Codex's `shell_environment_policy` to strip sensitive environment variables before spawning shell commands:
+4. **Shell Environment Scrubbing:** When the runtime supports environment filtering, use it to keep host credentials out of spawned commands. For Codex, `shell_environment_policy` can strip sensitive variables before shell execution:
    ```toml
    [shell_environment_policy]
    inherit = "core"
