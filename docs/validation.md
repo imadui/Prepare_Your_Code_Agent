@@ -1,0 +1,121 @@
+# The 12-Layer Validation Ladder
+
+When configuring an autonomous coding agent, issues often compound. If an agent fails to write code correctly, the root cause could be an expired provider token, a broken MCP handshake, a restrictive sandbox setting, or bad prompt wording.
+
+To diagnose and build reliable setups, always validate your agent environment using the **12-Layer Validation Ladder**.
+
+---
+
+## The 12 Layers
+
+```mermaid
+flowchart TD
+    L1[Layer 1: Provider Connectivity] --> L2[Layer 2: Agent CLI & Runtime]
+    L2 --> L3[Layer 3: Documentation Lookup]
+    L3 --> L4[Layer 4: MCP Protocol & Tools]
+    L4 --> L5[Layer 5: Local Git Health]
+    L5 --> L6[Layer 6: GitHub Integration]
+    L6 --> L7[Layer 7: File Editing & Patches]
+    L7 --> L8[Layer 8: Automated Test Execution]
+    L8 --> L9[Layer 9: Loopback Browser Automation]
+    L9 --> L10[Layer 10: Subagent Review]
+    L10 --> L11[Layer 11: Workspace Isolation]
+    L11 --> L12[Layer 12: Factual Evidence Reporting]
+```
+
+---
+
+## Layer-by-Layer Verification Guide
+
+### Layer 1: Provider Connectivity
+- **Question:** Can your machine reach the model endpoint and authenticate?
+- **Verification:** Run a raw curl or the dedicated smoke test script:
+  ```bash
+  python scripts/providers/test_openai.py
+  ```
+- **Pass Criteria:** HTTP 200 with non-empty text response. No credentials leaked in stdout.
+
+### Layer 2: Agent CLI & Runtime
+- **Question:** Is the agent binary installed and functioning?
+- **Verification:**
+  ```bash
+  codex --version
+  opencode --version
+  ```
+- **Pass Criteria:** Commands return clean version output without crashes or missing dynamic libraries.
+
+### Layer 3: Documentation Lookup
+- **Question:** Can the agent fetch up-to-date third-party documentation?
+- **Verification:** Ask the agent to look up a recent API method from Context7 or OpenAI docs.
+- **Pass Criteria:** Accurate method signatures retrieved without guessing or hallucinating deprecated APIs.
+
+### Layer 4: MCP Protocol & Tools
+- **Question:** Do configured MCP servers start cleanly and register their tools?
+- **Verification:** Run the agent and inspect tool listing:
+  ```bash
+  # For Codex: check status in TUI or inspect MCP server startup
+  codex --ask-for-approval never "list available tools"
+  ```
+- **Pass Criteria:** Configured MCP servers connect within the startup grace period without process crashes.
+
+### Layer 5: Local Git Health
+- **Question:** Is the workspace inside an initialized Git repository with clean tracking?
+- **Verification:**
+  ```bash
+  git status
+  ```
+- **Pass Criteria:** Clean working tree or known uncommitted files properly staged/unstaged. `.gitignore` is active.
+
+### Layer 6: GitHub Integration
+- **Question:** Can the agent create pull requests and read remote issues if needed?
+- **Verification:**
+  ```bash
+  gh auth status
+  ```
+- **Pass Criteria:** Authenticated account has appropriate permissions for the target repository.
+
+### Layer 7: File Editing & Patches
+- **Question:** Can the agent read files and apply atomic patches without file corruptions?
+- **Verification:** Test small multi-line edits and ensure indentation and line endings (LF/CRLF) are preserved.
+- **Pass Criteria:** Patches apply cleanly; no unintended lines modified.
+
+### Layer 8: Automated Test Execution
+- **Question:** Can the agent run unit and integration tests and correctly parse failures?
+- **Verification:**
+  ```bash
+  python -m unittest discover tests
+  ```
+- **Pass Criteria:** Test runner exits with zero exit code on success, and the agent accurately diagnoses failures.
+
+### Layer 9: Loopback Browser Automation
+- **Question:** If building web applications, can the agent verify the UI in a real browser?
+- **Verification:** Launch dev server on `127.0.0.1:<port>` and navigate via Playwright MCP.
+- **Pass Criteria:** Page loads, expected DOM elements exist, no console errors, and browser closes cleanly.
+
+### Layer 10: Subagent Review
+- **Question:** Can the primary agent delegate an independent code review to a subagent?
+- **Verification:** Trigger a review pass on a branch diff using a reviewer subagent.
+- **Pass Criteria:** Subagent provides actionable feedback without modifying files or reverting the primary agent's work.
+
+### Layer 11: Workspace Isolation
+- **Question:** Did the agent confine all writes and state to the workspace?
+- **Verification:**
+  ```bash
+  python scripts/validation/safety_check.py
+  ```
+- **Pass Criteria:** Zero writes in parent directories, no global Git mutations, no temporary files outside `.agent-tmp/`.
+
+### Layer 12: Factual Evidence Reporting
+- **Question:** Does the agent report actual observable evidence rather than hollow assertions?
+- **Pass Criteria:** The completion message quotes real test output, PIDs, URLs, and git diff summaries.
+
+---
+
+## Debugging Hierarchy Principle
+
+> **Always troubleshoot from bottom to top. Never debug a higher layer when a lower layer is broken.**
+
+- **Do not troubleshoot Playwright** if your local dev server fails to start on `127.0.0.1`.
+- **Do not rewrite `AGENTS.md`** if the provider API key is returning HTTP 401 Unauthorized.
+- **Do not debug subagent coordination** if primitive shell commands are failing in the sandbox.
+- **Do not modify application code** if the test harness itself is misconfigured.
