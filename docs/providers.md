@@ -36,19 +36,19 @@ Codex and OpenCode handle provider configuration differently:
 | Provider Type | Codex Configuration | OpenCode Configuration |
 |---|---|---|
 | **OpenAI** | Built-in default provider; set `OPENAI_API_KEY` or sign in via ChatGPT. | Native provider or `@ai-sdk/openai` in `opencode.json`. |
-| **Anthropic Claude** | Supported via custom proxy or Bedrock (`amazon-bedrock`). | Native provider (`anthropic`) with `ANTHROPIC_API_KEY`. |
+| **Anthropic Claude** | Use a compatible custom provider/proxy when your Codex runtime supports the required wire API. Do not infer support from Amazon Bedrock model availability alone. | Built-in/catalog provider support; authenticate through OpenCode's provider flow or environment-backed configuration. |
 | **Google Gemini API** | Supported via custom OpenAI-compatible proxy (LiteLLM/router). | Native provider (`google`) with `GEMINI_API_KEY`. |
-| **Gemini on Vertex AI** | Supported via enterprise proxy or LiteLLM. | Configured via `@ai-sdk/google-vertex` or custom adapter. |
-| **Azure OpenAI** | Dedicated `[model_providers.<id>]` table with `wire_api = "responses"` or `"chat_completions"`. | Configured via `@ai-sdk/azure` or `@ai-sdk/openai-compatible`. |
-| **OpenAI-Compatible** | Defined in `[model_providers.<id>]` in `~/.codex/config.toml`. | Defined in `provider.<id>` in `opencode.json` using `@ai-sdk/openai-compatible`. |
-| **Local OSS (Ollama/LM Studio)** | `--oss` flag with `oss_provider = "ollama"` in `config.toml`. | Custom provider pointing to `http://localhost:11434/v1`. |
+| **Gemini on Vertex AI** | Commonly routed through an OpenAI-compatible gateway when direct provider support is not available in the active Codex runtime. | V2 uses the `google-vertex` provider and Application Default Credentials (ADC), with project/location settings or supported environment variables. |
+| **Azure OpenAI** | Configure a suitable custom model provider and the wire API required by the endpoint. | V2 can use the built-in Azure runtime package or a compatible custom provider. |
+| **OpenAI-Compatible** | Defined in `[model_providers.<id>]` in Codex user configuration. | V2 defines custom providers under `providers.<id>` using an OpenCode runtime package such as `@opencode/ai/providers/openai-compatible`. |
+| **Local OSS (Ollama/LM Studio)** | Use Codex local/OSS provider support where available. | V2 includes local runtime discovery for Ollama, LM Studio, and vLLM; endpoints can be overridden with provider settings. |
 
 ---
 
 ## 1. OpenAI Direct API
 
 ### Overview
-Standard OpenAI developer access using `/v1/chat/completions` or the Responses API (`/v1/responses`).
+Standard OpenAI developer access. For GPT-6 tool-calling and agentic workflows, prefer the Responses API (`/v1/responses`).
 
 ### Environment Variables
 ```bash
@@ -60,13 +60,13 @@ export OPENAI_MODEL="gpt-6-sol"
 
 ### Raw Verification (curl)
 ```bash
-curl https://api.openai.com/v1/chat/completions \
+curl https://api.openai.com/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d '{
     "model": "gpt-6-sol",
-    "messages": [{"role": "user", "content": "ping"}],
-    "max_tokens": 10
+    "input": "ping",
+    "max_output_tokens": 10
   }'
 ```
 
