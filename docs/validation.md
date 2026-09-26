@@ -52,12 +52,14 @@ flowchart TD
 
 ### Layer 4: MCP Protocol & Tools
 - **Question:** Do configured MCP servers start cleanly and register their tools?
-- **Verification:** Run the agent and inspect tool listing:
+- **Verification:** Use the runtime's native MCP status command. For OpenCode, also distinguish service health from MCP reconciliation:
   ```bash
-  # For Codex: check status in TUI or inspect MCP server startup
-  codex --ask-for-approval never "list available tools"
+  opencode api GET /api/info
+  opencode reload
+  opencode mcp list
   ```
-- **Pass Criteria:** Configured MCP servers connect within the startup grace period without process crashes.
+- **Pass Criteria:** Required MCP servers connect after the runtime's normal initialization/reload window. Optional MCPs may remain disabled by design.
+- **Fallback check:** If a GitHub MCP fails but `gh auth status` succeeds, record GitHub CLI as the operational fallback rather than treating the whole environment as broken.
 
 ### Layer 5: Local Git Health
 - **Question:** Is the workspace inside an initialized Git repository with clean tracking?
@@ -90,8 +92,9 @@ flowchart TD
 
 ### Layer 9: Loopback Browser Automation
 - **Question:** If building web applications, can the agent verify the UI in a real browser?
-- **Verification:** Launch dev server on `127.0.0.1:<port>` and navigate via Playwright MCP.
-- **Pass Criteria:** Page loads, expected DOM elements exist, no console errors, and browser closes cleanly.
+- **Verification:** Launch the dev server on `127.0.0.1:<port>`, then use Playwright CLI for the user flow. Escalate to Chrome DevTools MCP for console/network/runtime inspection when needed.
+- **Authenticated-session case:** If the task targets an already-open browser, use a supported attach/extension mechanism. If attach is unavailable, use a dedicated persistent automation profile.
+- **Pass Criteria:** Page loads, expected elements can be interacted with, errors are diagnosed from observable browser evidence, and the agent detaches/closes only the sessions it created.
 
 ### Layer 10: Subagent Review
 - **Question:** Can the primary agent delegate an independent code review to a subagent?
@@ -116,7 +119,7 @@ flowchart TD
 
 > **Always troubleshoot from bottom to top. Never debug a higher layer when a lower layer is broken.**
 
-- **Do not troubleshoot Playwright** if your local dev server fails to start on `127.0.0.1`.
+- **Do not troubleshoot browser tooling** if your local dev server fails to start on `127.0.0.1`.
 - **Do not rewrite `AGENTS.md`** if the provider API key is returning HTTP 401 Unauthorized.
 - **Do not debug subagent coordination** if primitive shell commands are failing in the sandbox.
 - **Do not modify application code** if the test harness itself is misconfigured.
@@ -125,3 +128,17 @@ flowchart TD
 ## What the automated checks do not prove
 
 The repository scripts validate only what they can observe from the target workspace and the commands they execute. They do **not** prove that an agent never touched files outside the workspace, never changed machine-level settings, or never performed an external action. Use sandboxing, Git history, process/network evidence, and platform audit controls when those guarantees matter.
+
+
+## Recovery evidence to capture
+
+For a prepared workstation, keep a short record of the fallback that actually worked. Examples:
+
+- CLI and Desktop version alignment;
+- effective provider/model from the runtime, not only raw API connectivity;
+- MCP state before and after reload;
+- `gh auth status` when GitHub MCP is optional or unhealthy;
+- browser attach vs persistent-profile path;
+- service bind address/port when a Desktop depends on a local background server.
+
+This evidence turns a one-off successful setup into a reproducible runbook.
