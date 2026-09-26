@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "share": "disabled",
+  "permissions": [
+    { "action": "*", "resource": "*", "effect": "allow" }
+  ],
+  "experimental": {
+    "policies": [
+      { "action": "permission", "resource": "read:*/.ssh/*", "effect": "deny" },
+      { "action": "permission", "resource": "read:*/.aws/*", "effect": "deny" },
+      { "action": "permission", "resource": "read:*/.azure/*", "effect": "deny" },
+      { "action": "permission", "resource": "read:*/AppData/Local/Microsoft/Edge/User Data/*", "effect": "deny" },
+      { "action": "permission", "resource": "read:*/AppData/Local/Google/Chrome/User Data/*", "effect": "deny" },
+      { "action": "permission", "resource": "shell:*git config --global*", "effect": "deny" },
+      { "action": "permission", "resource": "shell:*npm install -g*", "effect": "deny" },
+      { "action": "permission", "resource": "shell:*ExecutionPolicy Bypass*", "effect": "deny" },
+      { "action": "permission", "resource": "shell:*Set-MpPreference*", "effect": "deny" },
+      { "action": "permission", "resource": "shell:*Start-Process*-Verb RunAs*", "effect": "deny" }
+    ]
+  }
+}
