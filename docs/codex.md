@@ -113,7 +113,7 @@ wire_api = "responses" # or "chat_completions"
 ### Amazon Bedrock
 Codex can route supported OpenAI models through Amazon Bedrock. Model IDs and regional availability are Bedrock-specific, so verify the current AWS/OpenAI compatibility guide before copying an example.
 
-For GPT-6 Sol in a supported `us-east-1` deployment, Bedrock uses an `openai.gpt-6-sol` model ID (or the corresponding Runtime inference-profile ID when using Bedrock Runtime). Do not assume that unrelated third-party Bedrock model IDs are interchangeable with Codex model-provider configuration.
+Do not copy a Bedrock model ID from another runtime. Verify the exact OpenAI model/provider path supported by your installed Codex version and the cloud deployment you actually use.
 
 ### Local OSS Mode
 Run against local Ollama or LM Studio models:
@@ -195,7 +195,7 @@ Codex natively supports spawning specialized subagents for independent, parallel
 ```toml
 [agents]
 enabled = true
-default_subagent_model = "gpt-6-luna"
+# default_subagent_model = "YOUR_AVAILABLE_FAST_MODEL"
 max_concurrent_threads_per_session = 3
 
 [agents.reviewer]
@@ -220,7 +220,31 @@ Subagents inherit the parent's sandbox policy and return structured results to t
 
 ---
 
-## 9. Troubleshooting Codex
+## 9. Provider and gateway fallback strategy
+
+A custom gateway should be a deliberate integration, not the first fix for a provider problem.
+
+If a custom provider fails:
+
+1. verify the upstream endpoint independently;
+2. verify the exact Codex `model_provider`, `base_url`, `env_key`, and wire API expected by the installed version;
+3. verify whether the setting belongs at user scope or project scope;
+4. test one minimal Codex task;
+5. only then add MCP, browser, or subagent complexity.
+
+If the model/provider you want is not a supported Codex path, prefer a runtime that supports it directly rather than making the workstation depend on an always-on translation bridge.
+
+### GitHub fallback
+
+Use `gh auth status` as the baseline GitHub health check. If a GitHub MCP integration is broken but `gh` is healthy, use the GitHub CLI for normal repository operations while you diagnose the MCP layer separately.
+
+### Browser fallback
+
+Prefer a deterministic browser CLI/tooling path for routine verification. Add a browser MCP only when its structured tool surface provides real value. For existing authenticated browser sessions, use supported attach/extension mechanisms or a dedicated persistent automation profile rather than copying browser credential databases.
+
+---
+
+## 10. Troubleshooting Codex
 
 | Symptom | Cause | Remedy |
 |---|---|---|
