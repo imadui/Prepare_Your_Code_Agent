@@ -2,9 +2,9 @@
 
 > Practical setup patterns for Codex, Claude Code, and OpenCode.
 
-Codex, Claude Code, and OpenCode are useful out of the box, but the quality of the experience depends heavily on how the model, tools, instructions, permissions, and validation loop are configured.
+Codex, Claude Code, and OpenCode are useful out of the box, but the quality of the experience depends heavily on how the model, tools, instructions, permissions, browser automation, and validation loop are configured.
 
-This repository provides a practical way to build that setup progressively: start with model connectivity, keep instructions small, add tools only when they solve a real problem, and validate the whole environment before relying on it.
+This repository is meant to be followed, not admired. It combines starter configuration with field-tested failure modes and fallbacks: CLI/Desktop version mismatches, provider problems, MCP cold-start races, GitHub authentication failures, browser-session reuse, managed-Windows constraints, and recovery paths that do not require weakening workstation security.
 
 ---
 
@@ -13,13 +13,13 @@ This repository provides a practical way to build that setup progressively: star
 - **LLM providers:** Direct API, cloud-hosted enterprise endpoints (Vertex AI, Azure OpenAI), and local/OpenAI-compatible gateways.
 - **Codex configuration:** Hierarchical config (`config.toml`), profiles, sandboxing modes, and execution approval policies.
 - **Claude Code configuration:** Settings scopes, `CLAUDE.md` / `AGENTS.md`, permissions, hooks, MCP, skills, and project subagents.
-- **OpenCode configuration:** Core architecture, `opencode.json`, custom model adapters, and permission boundaries.
+- **OpenCode configuration:** V2 architecture, `opencode.jsonc`, direct providers, background service/desktop behavior, permissions/policies, MCP fallbacks, and permission boundaries.
 - **Model Context Protocol (MCP):** Adding external tool servers deliberately without context bloat or schema collisions.
 - **Tools & tool profiles:** Selecting the right tools for the job (Minimal, Engineering, Browser) instead of enabling everything.
 - **Skills vs permanent instructions:** Using lightweight prompt discovery and progressive disclosure instead of monster system prompts.
 - **Subagents:** Configuring focused child agents (`explorer`, `reviewer`, `tester`, `security`) for independent verification.
 - **Git & GitHub integration:** Repository-scoped changes, commit hygiene, and automated code review workflows.
-- **Browser automation:** Deterministic DOM and visual UI verification using Playwright loopback sessions.
+- **Browser automation:** Playwright CLI-first automation, authenticated browser-session reuse, persistent-profile fallback, and DevTools diagnostics.
 - **Workspace isolation & guardrails:** Keeping agent actions scoped to the repository and avoiding global machine contamination.
 - **Temporary artifact hygiene:** Keeping scratch files confined to `.agent-tmp/` and cleaning them after task completion.
 - **Layered validation:** Verifying every layer from raw API ping to browser test before trusting an agent with production code.
@@ -51,6 +51,9 @@ More tools, giant prompt files, and unbounded subagent graphs do not make an age
 
 ## Quick start
 
+### 0. Read the real-world fallback guide
+Before copying a large configuration, read [`docs/field-tested-fallbacks.md`](docs/field-tested-fallbacks.md). It explains what to do when the nominal path fails and which fallback to choose without creating a brittle workstation.
+
 ### 1. Check your environment
 Run the doctor script to verify local runtimes, CLI binaries, and environment variables:
 ```bash
@@ -80,7 +83,7 @@ See [`docs/providers.md`](docs/providers.md) for full provider setup details.
 Review [`docs/tools.md`](docs/tools.md) to choose the profile that matches your workload:
 - **Minimal:** Shell + Git + Docs. Fast, inexpensive, lowest token footprint.
 - **Engineering:** Minimal + Context7 + GitHub MCP + Reviewer subagent. Standard for full-stack engineering.
-- **Browser:** Engineering + Playwright. Add it when web UI interactions or DOM validation are part of the task.
+- **Browser:** Engineering + Playwright CLI for normal interaction, plus Chrome DevTools MCP when console/network/runtime inspection is needed. Keep full Playwright MCP optional.
 
 ### 5. Validate the environment
 Run the end-to-end acceptance benchmark in an isolated sandbox:
@@ -148,7 +151,9 @@ Prepare_Your_Code_Agent/
 8. **Browser validation catches what unit tests miss.** Backend tests often pass while a button is unclickable, a CSS layout is broken, or a script fails to mount.
 9. **Evidence beats assertions.** Never accept an agent's claim that a feature works without seeing actual test output, process status, or DOM snapshots.
 10. **Temporary files need active lifecycle management.** Confine scratch files to `.agent-tmp/` and clean them before declaring a task finished.
-11. **Increase autonomy only as observability improves.** Start with interactive approvals (`on-request`). Shift to autonomous execution only after sandboxing and regression tests prove reliable.
+11. **Increase autonomy only as observability improves.** Start with interactive approvals where needed. For mature setups, prefer `allow` for routine engineering work plus hard `deny` boundaries for host/security/credential operations rather than removing every safeguard.
+12. **A working CLI does not prove the Desktop is equivalent.** Verify CLI and Desktop versions separately before rewriting a configuration that already works.
+13. **Use fallbacks instead of piling on bridges.** If a provider, MCP server, or browser path is brittle, prefer a simpler native path (`gh`, direct provider, Playwright CLI, persistent profile) over another always-on compatibility layer.
 
 ---
 
