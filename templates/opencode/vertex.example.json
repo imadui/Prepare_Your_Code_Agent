@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "google-vertex/YOUR_MODEL_ID",
+  "share": "disabled",
+  "providers": {
+    "google-vertex": {
+      "settings": {
+        "project": "YOUR_GCP_PROJECT",
+        "location": "global"
+      }
+    }
+  }
+}
