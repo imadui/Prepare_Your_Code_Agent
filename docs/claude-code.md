@@ -2,7 +2,7 @@
 
 Claude Code is Anthropic's agentic coding tool. It can read and edit a codebase, run shell commands, work with Git, connect external tools through MCP, load project instructions and skills, and delegate focused work to subagents.
 
-The preparation principles in this repository apply to Claude Code too. The architecture is largely the same:
+The preparation principles in this repository apply to Claude Code too. The architecture is largely the same, but the authentication, settings scopes, permissions, and supported provider paths are product-specific. See [field-tested-fallbacks.md](field-tested-fallbacks.md) for the cross-runtime recovery order:
 
 1. verify the model/provider path;
 2. keep permanent instructions concise;
@@ -94,9 +94,9 @@ Do not turn `CLAUDE.md` into a giant playbook. Put specialized procedures into s
 
 ### Interoperability with AGENTS.md
 
-Current Claude Code versions can also read `AGENTS.md`. If a repository already uses `AGENTS.md` for Codex or another coding agent, you do not necessarily need to duplicate the same rules.
+`CLAUDE.md` is the native project-instruction path to rely on. If your repository also has an `AGENTS.md` for Codex/OpenCode, reuse it explicitly instead of assuming every runtime will discover it the same way.
 
-A useful cross-agent pattern is:
+A practical cross-agent pattern is:
 
 ```markdown
 @AGENTS.md
@@ -106,7 +106,7 @@ A useful cross-agent pattern is:
 Add only Claude-specific instructions here.
 ```
 
-On Windows, prefer the import form above rather than a symlink.
+This keeps one shared engineering baseline while making the Claude-specific entry point explicit. On Windows, prefer an import over a symlink when portability matters.
 
 Official reference: https://code.claude.com/docs/en/memory
 
@@ -321,6 +321,20 @@ Add:
 
 Do not enable browser, GitHub, database, and communication tools just because they exist.
 
+### Provider fallback
+
+If Claude Code authentication or a third-party deployment path fails, do not assume that an arbitrary OpenAI-compatible endpoint can be substituted. Verify that the deployment path is one Claude Code officially supports, then run `claude doctor` and inspect the active settings scope before changing project instructions.
+
+If your desired model/provider is not a supported Claude Code path, use a runtime that supports it directly instead of introducing an unnecessary compatibility proxy.
+
+### GitHub fallback
+
+If a GitHub MCP integration is unhealthy but `gh auth status` succeeds, use the GitHub CLI for normal repository operations while diagnosing MCP separately. This keeps authentication in the OS-supported GitHub CLI flow instead of duplicating tokens.
+
+### Browser fallback
+
+For routine web verification, prefer deterministic browser automation with a small tool surface. When an already-authenticated browser session is required, use the browser/tool's supported attach or extension mechanism. If attach is unavailable, use a dedicated persistent automation profile. Do not copy raw browser cookie/login databases.
+
 ---
 
 ## 10. Validate the setup
@@ -353,7 +367,7 @@ Useful validation questions:
 - Does the final report cite real test/diff evidence?
 - Did the task stay inside the workspace?
 
-Use `claude doctor` when configuration entries or customizations do not load as expected.
+Use `claude doctor` when configuration entries or customizations do not load as expected. Also verify the exact settings scope that supplied the active permission rule before editing shared project settings.
 
 ---
 
