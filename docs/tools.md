@@ -41,13 +41,19 @@ graph LR
 - **What it solves:** Pull request creation, issue tracking, and inline review comment resolution.
 - **Verdict:** **Selective.** Keep disabled during local feature development. Enable when agent workflows involve multi-branch PR management or automated CI review triage.
 
-### 4. Browser Automation (Playwright vs. Computer Use)
-- **Deterministic Browser (Playwright):**
-  - Directly queries the DOM, fills forms, clicks buttons, evaluates JavaScript, and captures screenshots.
-  - **Verdict:** Highly reliable for automated web testing and verifying that a loopback frontend server works.
+### 4. Browser Automation (CLI first, MCP when useful)
+- **Playwright CLI:**
+  - Directly drives Chromium-family browsers, fills forms, clicks, snapshots, and captures screenshots.
+  - **Verdict:** Preferred default for coding agents because it keeps the browser capability available without loading a large MCP tool catalog.
+- **Chrome DevTools MCP:**
+  - Best for console, network, runtime, and performance inspection.
+  - **Verdict:** Excellent complement to Playwright CLI; keep it slim when the server supports selective tooling.
+- **Playwright MCP:**
+  - Rich structured browser tool surface.
+  - **Verdict:** Useful when MCP-native browser tools materially improve the workflow; otherwise keep it disabled.
 - **Visual Computer Use (OS / Desktop UI):**
-  - Operates via mouse coordinates and visual screen capture.
-  - **Verdict:** Brittle and resource-intensive. Reserve strictly for legacy desktop apps that lack CLI or API interfaces. Never use for web applications when Playwright is available.
+  - Operates via visual interaction when deterministic browser tooling is unavailable.
+  - **Verdict:** Reserve for workflows that cannot be handled through browser-native or API/CLI paths.
 
 ---
 
@@ -76,10 +82,11 @@ Rather than enabling everything globally, organize your agent configurations int
 ### Profile 3: BROWSER
 *For frontend development, web application QA, and end-to-end user flow verification.*
 
-- **Tools:** Engineering Profile + Playwright MCP server.
+- **Tools:** Engineering Profile + Playwright CLI.
+- **Optional MCP:** Chrome DevTools MCP for deep diagnostics; Playwright MCP only when needed.
 - **Subagents:** `reviewer`, `tester`.
-- **Context Footprint:** High.
-- **Rule:** Enforce loopback-only binding (`http://127.0.0.1:<port>`). Close browser sessions immediately when verification finishes.
+- **Context Footprint:** Medium by default; high only when richer browser MCPs are enabled.
+- **Rule:** Enforce loopback-only binding (`http://127.0.0.1:<port>`). If you attach to a browser the user already had open, detach when finished instead of closing it.
 
 ---
 
@@ -91,7 +98,9 @@ Rather than enabling everything globally, organize your agent configurations int
 | **File Editor (`apply_patch`)** | Precise multi-file updates and unified diffs. | Always. | Read-only audit tasks. | No | Low |
 | **Context7 MCP** | Up-to-date documentation and code examples. | Using external libraries/frameworks. | Pure standard library or internal-only code. | No (public tier) or API key | Medium |
 | **GitHub MCP** | PRs, issue updates, review threads, and diff checks. | CI/CD pipelines, PR reviews, automated release notes. | Offline or local-only feature implementation. | Yes (`GITHUB_TOKEN`) | Medium to High |
-| **Playwright MCP** | Programmatic browser testing, DOM checks, screenshots. | Web app frontend verification on loopback servers. | Backend APIs, CLI tools, libraries. | No | High |
+| **Playwright CLI** | Deterministic browser interaction with low agent-tool overhead. | Normal web UI verification and flows. | Non-browser tasks. | No | Low to Medium |
+| **Chrome DevTools MCP** | Console, network, runtime, performance diagnostics. | Deep browser debugging after reproducing the issue. | Simple click/fill flows. | No | Medium |
+| **Playwright MCP** | Rich MCP-native browser automation. | When the MCP tool surface materially helps the workflow. | Routine browser tasks already covered by Playwright CLI. | No | High |
 | **Computer Use** | Native desktop UI control via mouse/keystroke coordinates. | Desktop workflows with no suitable API/CLI or browser automation path. | Prefer deterministic tools when available. | Depends on environment | Very High |
 | **Database MCP** | Querying staging or dev database schemas directly. | Complex SQL migration authoring and schema inspection. | General coding; risks accidental production writes. | Yes (DB credentials) | Medium |
 | **Slack / Email MCP** | Sending messages and team notifications. | Dedicated communication automations. | Core coding tasks (distracts agent and leaks tokens). | Yes (OAuth/Token) | High |
@@ -103,3 +112,19 @@ Rather than enabling everything globally, organize your agent configurations int
 > **If a capability can be executed via a standard CLI command (`gh pr create`, `curl`, `pytest`, `npm test`), prefer the shell tool over adding a dedicated MCP server.**
 
 Reserve MCP servers for capabilities that require structured JSON-RPC interaction, streaming context, or rich external documentation search that cannot be matched by a simple CLI call.
+
+
+---
+
+## Browser session reuse
+
+When a task explicitly targets an already-open authenticated browser, do not default to a clean profile.
+
+Preferred order:
+
+1. use the browser automation tool's supported attach/extension mechanism;
+2. operate the existing tab/session;
+3. detach when done;
+4. if attach is unavailable, use a dedicated persistent automation profile.
+
+Do not copy browser `Cookies`, `Login Data`, `Web Data`, or `Local State` databases as a session-migration shortcut. Those files contain live authentication material and are the wrong abstraction for normal browser automation.
