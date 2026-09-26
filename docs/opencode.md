@@ -338,6 +338,39 @@ Health check:
 opencode api GET /api/info
 ```
 
+### Windows: keep the local service available after sign-in
+
+If Desktop and CLI both depend on the same fixed loopback service, you can start it at user logon with a **visible standard-user Startup script**. This is ordinary user-session startup, not a hidden scheduled task.
+
+```powershell
+$OC = "$env:APPDATA\npm\opencode.cmd"
+$Startup = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
+$Starter = Join-Path $Startup "OpenCode_Service_Start.cmd"
+
+& $OC service set port 49374
+& $OC service start
+
+$Content = @'
+@echo off
+"%APPDATA%\npm\opencode.cmd" service start >nul 2>&1
+'@
+
+Set-Content -LiteralPath $Starter -Value $Content -Encoding ASCII
+```
+
+Verify:
+
+```powershell
+& $OC service status
+
+Get-NetTCPConnection -LocalPort 49374 -State Listen -ErrorAction SilentlyContinue |
+Select-Object LocalAddress, LocalPort, OwningProcess
+```
+
+Expected bind address for a single-machine setup: `127.0.0.1`.
+
+Do not switch the hostname to `0.0.0.0` just to make Desktop work locally. Do not hide the startup script or convert it into stealth persistence.
+
 Web/Desktop pairing:
 
 ```bash
