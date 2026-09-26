@@ -3,8 +3,7 @@
 # Path: ~/.codex/config.toml or <profile>.config.toml
 # ==============================================================================
 
-# Default model and reasoning effort
-model = "gpt-6-sol"
+# Use the runtime/account default model unless you have verified an exact model ID.
 model_reasoning_effort = "medium"
 
 # Approval and Sandbox Policy
@@ -43,7 +42,7 @@ project_doc_max_bytes = 32768
 # Subagent Configuration
 [agents]
 enabled = true
-default_subagent_model = "gpt-6-luna"
+# default_subagent_model = "YOUR_AVAILABLE_FAST_MODEL"
 max_concurrent_threads_per_session = 3
 interrupt_message = true
 
