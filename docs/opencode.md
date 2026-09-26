@@ -1,60 +1,91 @@
-# OpenCode Configuration and Operations Guide
+# OpenCode V2 Configuration and Operations Guide
 
-OpenCode is an open-source, provider-agnostic coding agent available as a terminal interface, desktop app, and web app.
+OpenCode is a provider-agnostic coding agent available as a terminal interface, desktop app, and web app.
 
-This guide targets **OpenCode V2**. V1 configuration is still recognized in many cases, but V2 renamed several important fields. In particular, V2 uses `agents`, ordered `permissions`, `providers`, and `mcp.servers`. If you are upgrading an older setup, use the official V1-to-V2 migration guide instead of mixing both syntaxes in one example.
+This guide targets **OpenCode V2** and is written as an operational playbook. The important lesson is that a valid config is only one layer: provider resolution, Desktop/CLI version alignment, background service state, MCP lifecycle, browser tooling, and validation all need to work together.
+
+For the real-world recovery paths behind this guide, also read [field-tested-fallbacks.md](field-tested-fallbacks.md).
 
 ---
 
-## 1. Installation
+## 1. Install and verify the runtime
 
-For the V2 CLI, the current npm package is:
+For the V2 CLI:
 
 ```bash
 npm install -g @opencode/cli
 opencode --version
 ```
 
-Other installation methods are documented by OpenCode. On Windows, use a supported standalone/installer path or npm if it fits your environment; do not assume a Windows package manager is available.
+On Windows, Desktop and CLI can be installed separately. **Do not assume they are the same build.** Verify each one before changing a configuration that already works.
 
-Launch OpenCode from a project directory:
+Launch from a repository:
 
 ```bash
-cd /path/to/your/project
+cd /path/to/project
 opencode
 ```
 
----
+Useful first commands:
 
-## 2. Configuration
-
-OpenCode reads JSON/JSONC configuration validated by:
-
-```text
-https://opencode.ai/config.json
+```bash
+opencode --version
+opencode debug config
+opencode debug agents
+opencode models
+opencode mcp list
 ```
 
-Keep user-wide defaults small and prefer project configuration for repository-specific behavior. Avoid copying a large global tool catalog into every project.
+If a minimal model call does not work, stop there and fix provider/runtime connectivity before adding tools.
 
-V2 uses plural top-level collections such as:
+---
+
+## 2. Use V2 configuration consistently
+
+OpenCode V2 uses:
 
 - `providers`
 - `agents`
-- `permissions`
+- ordered `permissions`
 - `mcp.servers`
+
+Do not mix those with legacy V1 singular fields in a new starter config.
+
+Global config:
+
+```text
+~/.config/opencode/opencode.jsonc
+```
+
+Project config:
+
+```text
+<repo>/opencode.jsonc
+<repo>/.opencode/opencode.jsonc
+```
+
+OpenCode merges configuration by scope. Keep global defaults small; put repository-specific behavior in the repository.
+
+Always validate the effective result instead of reading one file and guessing:
+
+```bash
+opencode debug config
+```
 
 ---
 
-## 3. Providers
+## 3. Provider setup: prefer direct support
 
-For standard providers, the simplest path is usually:
+For built-in providers, prefer OpenCode's native provider integration instead of adding a proxy just because a proxy is possible.
+
+The interactive path is:
 
 ```text
 /connect
 /models
 ```
 
-For a custom OpenAI-compatible gateway, V2 uses a provider definition like this:
+For a custom OpenAI-compatible gateway:
 
 ```json
 {
@@ -70,7 +101,7 @@ For a custom OpenAI-compatible gateway, V2 uses a provider definition like this:
       },
       "models": {
         "coder": {
-          "modelID": "upstream/coder-v2",
+          "modelID": "upstream/coder",
           "name": "Coder"
         }
       }
@@ -79,131 +110,374 @@ For a custom OpenAI-compatible gateway, V2 uses a provider definition like this:
 }
 ```
 
-For Vertex AI, V2 provides a `google-vertex` provider and uses Application Default Credentials. Supply the project and location through provider settings or supported environment variables.
+### Vertex AI
 
-Do not copy model limits from another provider unless you have verified them for the exact endpoint you are configuring.
-
----
-
-## 4. Instructions and skills
-
-Keep permanent repository guidance in `AGENTS.md` concise and stable. Put specialized workflows into skills so they are loaded only when needed.
-
-A useful `AGENTS.md` should focus on repository invariants:
-
-- inspect before editing;
-- preserve unrelated changes;
-- keep development servers on loopback;
-- test before reporting completion;
-- protect credentials;
-- keep temporary artifacts scoped to the workspace.
-
-OpenCode V2 also supports skills through the `skill` tool. Permissions can allow, ask, or deny specific skill IDs.
-
----
-
-## 5. Agents and permissions
-
-V2 defines custom agents under `agents`. Permissions are ordered rules; the last matching rule wins.
+OpenCode V2 has a direct `google-vertex` provider. Prefer it over a compatibility bridge when Vertex is the real upstream.
 
 Example:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "google-vertex/YOUR_MODEL_ID",
+  "providers": {
+    "google-vertex": {
+      "settings": {
+        "project": "YOUR_GCP_PROJECT",
+        "location": "global"
+      }
+    }
+  }
+}
+```
+
+Use Application Default Credentials or the authentication mechanism supported by your organization. Keep credential files out of the repository.
+
+Verify the provider/model the runtime actually resolved:
+
+```bash
+opencode debug config
+opencode models
+opencode run "Reply exactly MODEL_OK. Do not use tools."
+```
+
+A raw Vertex API success is useful, but the `opencode run` smoke test is the proof that OpenCode is wired correctly.
+
+---
+
+## 4. Instructions and skills
+
+Keep permanent `AGENTS.md` guidance concise:
+
+- inspect before editing;
+- preserve unrelated changes;
+- keep dev servers on loopback;
+- test before reporting completion;
+- protect credentials;
+- keep scratch artifacts scoped to the workspace;
+- report observable evidence.
+
+Move specialized procedures into skills so they are loaded only when needed.
+
+Good skill candidates:
+
+- current documentation lookup;
+- deep debugging;
+- GitHub workflow;
+- implementation verification;
+- release checks;
+- repository archaeology;
+- safe Git;
+- browser testing;
+- Windows/PowerShell-specific workflow.
+
+The goal is progressive disclosure, not one giant permanent prompt.
+
+---
+
+## 5. Agents and permissions
+
+V2 permissions are ordered rules. **The last matching rule wins.**
+
+Conservative example:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    { "action": "shell", "resource": "*", "effect": "ask" },
+    { "action": "shell", "resource": "git status *", "effect": "allow" },
+    { "action": "shell", "resource": "git diff *", "effect": "allow" },
+    { "action": "shell", "resource": "git push *", "effect": "deny" }
+  ]
+}
+```
+
+A read-only reviewer:
+
+```json
+{
   "agents": {
     "reviewer": {
-      "description": "Review changes without modifying files.",
+      "description": "Review code without modifying files.",
       "mode": "subagent",
-      "system": "Focus on correctness, regressions, security, and missing tests.",
       "permissions": [
         { "action": "edit", "resource": "*", "effect": "deny" },
         { "action": "shell", "resource": "*", "effect": "deny" }
       ]
-    },
-    "tester": {
-      "description": "Run relevant test and validation commands.",
-      "mode": "subagent",
-      "system": "Verify behavior and report evidence. Do not make unrelated changes.",
-      "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "shell", "resource": "*", "effect": "ask" },
-        { "action": "shell", "resource": "git status*", "effect": "allow" },
-        { "action": "shell", "resource": "python -m unittest*", "effect": "allow" },
-        { "action": "shell", "resource": "pytest*", "effect": "allow" },
-        { "action": "shell", "resource": "npm test*", "effect": "allow" }
-      ]
     }
   }
 }
 ```
 
-V2 action names differ from V1 in several places. For example:
+Useful agent roles:
 
-- V1 `bash` -> V2 `shell`
-- V1 `task` -> V2 `subagent`
-- V1 `agent` -> V2 `agents`
-- V1 `permission` -> V2 ordered `permissions`
+- `explore`: fast read-only codebase mapping;
+- `reviewer`: independent diff review;
+- `tester`: test execution and failure analysis;
+- `security`: read-only security inspection.
 
-Do not mix the two styles in a starter template.
+OpenCode also ships built-in agents including `build`, `plan`, `general`, and `explore`. Override a built-in only when you need different behavior.
 
----
+### Autonomous mode without permission fatigue
 
-## 6. MCP servers
+For a mature workstation, "autonomous" should mean routine engineering actions run without prompts, not that the agent can reconfigure the host.
 
-V2 stores MCP servers under `mcp.servers`.
-
-Local stdio server:
+A useful pattern is:
 
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    { "action": "*", "resource": "*", "effect": "allow" }
+  ],
+  "experimental": {
+    "policies": [
+      { "action": "permission", "resource": "read:*/.ssh/*", "effect": "deny" },
+      { "action": "permission", "resource": "read:*/.aws/*", "effect": "deny" },
+      { "action": "permission", "resource": "shell:*git config --global*", "effect": "deny" }
+    ]
+  }
+}
+```
+
+Policies are binary hard boundaries; they do not create approval prompts. Use them for host/security/credential operations that should fail directly.
+
+For truly unrestricted execution, use an isolated VM/container instead of removing workstation protections.
+
+---
+
+## 6. MCP: add less, verify more
+
+MCP servers live under `mcp.servers`.
+
+Remote Context7 example:
+
+```json
+{
   "mcp": {
     "servers": {
       "context7": {
-        "type": "local",
-        "command": ["npx", "-y", "@upstash/context7-mcp"]
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp"
       }
     }
   }
 }
 ```
 
-Remote Streamable HTTP server:
+Local stdio example:
 
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "servers": {
-      "docs": {
-        "type": "remote",
-        "url": "https://mcp.example.com/mcp"
+      "example": {
+        "type": "local",
+        "command": ["node", "server.js"]
       }
     }
   }
 }
 ```
 
-Add only servers that solve a real problem. MCP tools can add context and tool-selection overhead, and remote servers may require separate authentication.
+Prefer a local pinned install for tooling you rely on heavily. Re-downloading `@latest` at every agent start is convenient for experimentation but less predictable for a stable workstation.
+
+Check MCP state with:
+
+```bash
+opencode mcp list
+```
 
 ---
 
-## 7. Practical troubleshooting
+## 7. The MCP cold-start failure mode
 
-| Symptom | What to check | Safe next step |
+A background service can report healthy before MCP reconciliation is complete.
+
+If `opencode mcp list` unexpectedly shows no servers after a cold start, use this sequence before changing the config:
+
+```bash
+opencode service stop
+opencode service start
+opencode api GET /api/info
+opencode reload
+# allow a short initialization window
+opencode mcp list
+```
+
+If the servers appear after `reload`, the config was not the problem.
+
+This distinction matters: otherwise you can waste time rewriting a correct `mcp.servers` block to solve a lifecycle race.
+
+---
+
+## 8. Background service, Desktop, and fixed loopback port
+
+OpenCode V2 provides a background service:
+
+```bash
+opencode service start
+opencode service status
+opencode service restart
+opencode service stop
+```
+
+For Desktop + CLI on one workstation, a fixed local port makes reconnection predictable:
+
+```bash
+opencode service set port 49374
+opencode service start
+opencode service status
+```
+
+Keep it bound to loopback when remote access is not required.
+
+Health check:
+
+```bash
+opencode api GET /api/info
+```
+
+Web/Desktop pairing:
+
+```bash
+opencode pair
+```
+
+Pairing links are one-time and short-lived. If a link expires, generate a new one instead of changing server settings.
+
+### Desktop/CLI mismatch
+
+If CLI V2 works but Desktop reports a schema/configuration error:
+
+1. verify the Desktop version independently;
+2. update Desktop before editing the working CLI config;
+3. verify the Desktop's local server version;
+4. only then troubleshoot config syntax.
+
+A CLI success does not prove the Desktop sidecar is the same generation.
+
+---
+
+## 9. GitHub integration: MCP is optional
+
+GitHub MCP is useful for structured GitHub operations, but it is not required for a strong coding-agent setup.
+
+First verify GitHub CLI:
+
+```bash
+gh auth status
+```
+
+If `gh` is healthy but GitHub MCP authentication fails, use `gh` as the fallback:
+
+```bash
+gh repo view
+gh issue list
+gh pr create
+gh pr checks
+```
+
+This is often simpler and avoids moving a PAT into another configuration layer.
+
+Do not print tokens to debug an MCP header. Prefer the OS keyring and normal `gh auth` flows.
+
+---
+
+## 10. Browser stack: Playwright CLI first
+
+For coding agents, the default browser stack should optimize for deterministic interaction and low tool-schema overhead.
+
+Recommended order:
+
+1. **Playwright CLI** for navigation, clicks, forms, snapshots, and screenshots;
+2. **Chrome DevTools MCP** for console/network/runtime/performance diagnostics;
+3. **Playwright MCP** only when its richer MCP tool surface is specifically useful.
+
+A local tool layout on Windows can be:
+
+```text
+%LOCALAPPDATA%\OpenCodeTools\
+  playwright-cli\
+  chrome-devtools\
+```
+
+### Microsoft Edge
+
+Use the installed Edge browser when that matches the application's real user environment.
+
+For a new automation session, launch Edge through Playwright.
+
+For an **already-open authenticated browser**, prefer the supported attach/extension path when available. That preserves SSO, cookies, MFA state, extensions, and existing tabs.
+
+Do **not** copy raw Edge/Chrome `Cookies`, `Login Data`, `Web Data`, or `Local State` databases to "clone" a session.
+
+Fallback: use a dedicated persistent automation profile. Authenticate once and reuse that separate profile on future automation runs.
+
+---
+
+## 11. Managed Windows / enterprise workstation guidance
+
+A coding-agent setup should remain auditable.
+
+Prefer:
+
+- standard-user installs;
+- signed vendor binaries;
+- visible startup scripts;
+- user-local tool directories;
+- loopback services;
+- normal keyring-backed credentials;
+- supported browser attach/extension mechanisms.
+
+Avoid:
+
+- `ExecutionPolicy Bypass`;
+- hidden PowerShell/VBS launchers;
+- disabling or excluding Defender/EDR;
+- firewall weakening;
+- ACL/ownership tricks;
+- hidden persistence;
+- direct browser credential-database copying.
+
+On a managed workstation, reliability and auditability are part of the engineering requirement.
+
+---
+
+## 12. Troubleshooting matrix
+
+| Symptom | What to check first | Fallback |
 |---|---|---|
-| Provider authentication fails | Active provider account, environment variable name, model ID | Re-run provider connection and verify the exact provider/model selection |
-| Custom model is unavailable | `providers.<id>.models` key, `modelID`, endpoint | Check the provider map and exact upstream model ID |
-| Agent cannot edit files | Ordered `permissions` rules | Inspect the last matching `edit` rule |
-| Shell action still asks | `shell` resource pattern | Add a narrow allow rule for the exact command family if appropriate |
-| MCP server does not connect | `mcp.servers` entry, command/URL, auth | Run `opencode mcp list` and test the server independently |
-| Old config behaves strangely | Mixed V1/V2 fields | Migrate the file instead of layering V2 fields onto a legacy example |
+| Model absent | `opencode debug config`, `opencode models` | Verify direct provider settings before adding a bridge |
+| CLI works, Desktop fails | Desktop version/local server version | Update/align Desktop before rewriting config |
+| `No MCP servers configured` after cold start | service health + `reload` | Wait briefly, rerun `mcp list` |
+| GitHub MCP auth fails | `gh auth status` | Use `gh` CLI/keyring |
+| Playwright new browser requires login | existing browser attach path | persistent automation profile |
+| Browser UI works but app still fails | console/network | Chrome DevTools MCP |
+| Agent asks too often | ordered permissions | allow routine actions, hard-deny host-risk actions |
+| Old config behaves strangely | mixed V1/V2 syntax | migrate instead of layering both styles |
 
 ---
 
-## 8. V1 migration note
+## 13. Acceptance test
 
-Older OpenCode documentation uses singular keys such as `agent`, `provider`, and tool-grouped `permission` objects. Those examples are useful when maintaining a V1 setup, but new templates in this repository target V2.
+Do not call the setup complete until these pass:
 
-When migrating, follow the current OpenCode migration guide and validate the resulting configuration with the V2 schema and CLI.
+```bash
+opencode --version
+opencode debug config
+opencode debug agents
+opencode run "Reply exactly CORE_OK. Do not use tools."
+opencode mcp list
+gh auth status
+```
+
+Then test:
+
+- one read-only explorer subagent;
+- one reviewer subagent;
+- one tester subagent;
+- browser tooling if your workflow needs it;
+- final Git diff/status evidence.
+
+The point of the preparation is not to create an impressive config file. It is to create a runtime that recovers predictably when one layer fails.
