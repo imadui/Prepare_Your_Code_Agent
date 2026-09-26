@@ -1,5 +1,5 @@
-# Engineering Codex Profile: Context7 + GitHub MCP + Reviewer Subagent
-model = "gpt-6-sol"
+# Engineering Codex Profile: Context7 + Reviewer Subagent
+# Uses the runtime/account default model; set `model` only after verifying an exact available ID.
 model_reasoning_effort = "medium"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
@@ -23,7 +23,7 @@ ignore_default_excludes = false
 
 [agents]
 enabled = true
-default_subagent_model = "gpt-6-luna"
+# default_subagent_model = "YOUR_AVAILABLE_FAST_MODEL"
 max_concurrent_threads_per_session = 3
 
 [agents.reviewer]
