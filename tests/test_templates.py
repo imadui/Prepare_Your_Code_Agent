@@ -15,7 +15,6 @@ class TestTemplates(unittest.TestCase):
         self.assertTrue(os.path.exists(path), f"Missing {path}")
         with open(path, "rb") as f:
             data = tomllib.load(f)
-        self.assertIn("model", data)
         self.assertIn("approval_policy", data)
         self.assertIn("sandbox_mode", data)
         self.assertIn("agents", data)
@@ -26,9 +25,24 @@ class TestTemplates(unittest.TestCase):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         self.assertIn("agents", data)
-        self.assertIn("providers", data)
+        self.assertIn("permissions", data)
         self.assertIn("mcp", data)
         self.assertIn("servers", data["mcp"])
+
+    def test_opencode_vertex_example_valid(self):
+        path = os.path.join(self.root, "templates", "opencode", "vertex.example.json")
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertEqual(data["model"].split("/")[0], "google-vertex")
+        self.assertIn("google-vertex", data["providers"])
+
+    def test_opencode_autonomous_example_valid(self):
+        path = os.path.join(self.root, "templates", "opencode", "autonomous.example.json")
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("permissions", data)
+        self.assertIn("experimental", data)
+        self.assertIn("policies", data["experimental"])
 
     def test_claude_code_settings_json_valid(self):
         path = os.path.join(self.root, "templates", "claude-code", "settings.json")
