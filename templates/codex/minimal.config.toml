@@ -1,6 +1,6 @@
 # Minimal Codex Profile: Shell + Git only
+# Uses the runtime/account default model; set `model` only after verifying an exact available ID.
 # Low token overhead, fast response time
-model = "gpt-6-luna"
 model_reasoning_effort = "low"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
