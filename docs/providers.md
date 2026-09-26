@@ -42,9 +42,9 @@ Codex and OpenCode handle arbitrary provider configuration differently:
 | Provider Type | Codex Configuration | OpenCode Configuration |
 |---|---|---|
 | **OpenAI** | Built-in default provider; set `OPENAI_API_KEY` or sign in via ChatGPT. | Native provider or `@ai-sdk/openai` in `opencode.json`. |
-| **Anthropic Claude** | Use a compatible custom provider/proxy when your Codex runtime supports the required wire API. Do not infer support from Amazon Bedrock model availability alone. | Built-in/catalog provider support; authenticate through OpenCode's provider flow or environment-backed configuration. |
-| **Google Gemini API** | Supported via custom OpenAI-compatible proxy (LiteLLM/router). | Native provider (`google`) with `GEMINI_API_KEY`. |
-| **Gemini on Vertex AI** | Commonly routed through an OpenAI-compatible gateway when direct provider support is not available in the active Codex runtime. | V2 uses the `google-vertex` provider and Application Default Credentials (ADC), with project/location settings or supported environment variables. |
+| **Anthropic Claude** | Do not assume direct support. Use only a provider/wire path documented for the installed Codex version; otherwise use a runtime that supports Claude natively. | Built-in/catalog provider support where available. |
+| **Google Gemini API** | Do not assume an arbitrary Gemini endpoint can be dropped into Codex. Verify current Codex provider support first; a proxy is optional, not the default recommendation. | Native provider (`google`) with `GEMINI_API_KEY` where supported. |
+| **Gemini on Vertex AI** | Verify current Codex support before adding a gateway. If unsupported, prefer a runtime with direct Vertex support over an always-on translation bridge. | V2 uses the `google-vertex` provider and Application Default Credentials (ADC), with project/location settings or supported environment variables. |
 | **Azure OpenAI** | Configure a suitable custom model provider and the wire API required by the endpoint. | V2 can use the built-in Azure runtime package or a compatible custom provider. |
 | **OpenAI-Compatible** | Defined in `[model_providers.<id>]` in Codex user configuration. | V2 defines custom providers under `providers.<id>` using an OpenCode runtime package such as `@opencode/ai/providers/openai-compatible`. |
 | **Local OSS (Ollama/LM Studio)** | Use Codex local/OSS provider support where available. | V2 includes local runtime discovery for Ollama, LM Studio, and vLLM; endpoints can be overridden with provider settings. |
@@ -54,14 +54,14 @@ Codex and OpenCode handle arbitrary provider configuration differently:
 ## 1. OpenAI Direct API
 
 ### Overview
-Standard OpenAI developer access. For GPT-6 tool-calling and agentic workflows, prefer the Responses API (`/v1/responses`).
+Standard OpenAI developer access. Use a model ID currently available to your API project and the API surface required by the runtime. Do not copy a model name from another account or from this repository.
 
 ### Environment Variables
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 # Optional overrides:
 export OPENAI_BASE_URL="https://api.openai.com/v1"
-export OPENAI_MODEL="gpt-6-sol"
+export OPENAI_MODEL="your-model-name"
 ```
 
 ### Raw Verification (curl)
@@ -118,12 +118,9 @@ python scripts/providers/test_gemini.py
 Enterprise-grade deployment of Gemini hosted within Google Cloud Platform. Does not use static API keys. Instead, it relies on Google Cloud Application Default Credentials (ADC) or service account OAuth2 access tokens.
 
 ### Prerequisites
-1. Google Cloud CLI installed (`gcloud`).
-2. An active GCP project with the Vertex AI API enabled (`aiplatform.googleapis.com`).
-3. Authenticate ADC:
-   ```bash
-   gcloud auth application-default login
-   ```
+1. An active GCP project with Vertex AI access.
+2. Application Default Credentials (ADC) available to the runtime. `gcloud auth application-default login` is one developer-workstation path, but enterprise environments may provision ADC differently.
+3. Know the exact project, location, and model ID you are entitled to use.
 
 ### Environment Variables
 ```bash
@@ -217,7 +214,9 @@ python scripts/providers/test_azure.py
 ## 6. Generic OpenAI-Compatible Gateway
 
 ### Overview
-Covers self-hosted proxies (LiteLLM, vLLM, Ollama) and third-party gateways (Groq, OpenRouter, Mistral) that implement the `/v1/chat/completions` specification.
+Covers self-hosted proxies and third-party gateways that implement an OpenAI-compatible API. Treat compatibility as something to verify: some runtimes require Responses API behavior, others accept Chat Completions, and tool-calling semantics can differ.
+
+**Fallback rule:** use a compatibility gateway only when it solves a real provider gap. If the coding agent has a direct native provider path, prefer that first.
 
 ### Environment Variables
 ```bash
@@ -251,3 +250,21 @@ python scripts/providers/test_compatible.py
 - **Do not embed keys in configuration files.** Prefer referencing environment variables (e.g. `env_key = "OPENAI_API_KEY"` in Codex, or `"{env:OPENAI_API_KEY}"` in OpenCode).
 - **Use least-privilege API keys.** Restrict keys to required model endpoints and set monthly spend caps.
 - **Sanitize error outputs.** Never let scripts or CI logs dump raw HTTP headers where `Authorization` or `api-key` values might leak.
+
+
+---
+
+## Provider troubleshooting order
+
+When a coding agent cannot use a model, debug in this order:
+
+1. verify the provider independently;
+2. verify the exact model ID;
+3. verify the runtime's native provider support;
+4. verify the runtime's effective configuration;
+5. run one minimal model task from the runtime;
+6. only then add a proxy/gateway if it is genuinely required.
+
+A raw provider test proves network/authentication. It does **not** prove Codex, Claude Code, or OpenCode is configured to use that provider.
+
+If a compatibility bridge becomes the only reason the workstation works, document it as an explicit dependency and test it separately. Prefer removing the bridge when a direct provider path becomes available.
